@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌲 에바 에이전트 팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════
+   RESET & VARIABLES
+══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 2; padding: 5; }
+:root {
+  --bg:      #FDFAF5;
+  --surface: #F5F0E8;
+  --surf2:   #EDE8DF;
+  --border:  rgba(180,160,130,.2);
+  --text:    #2C2416;
+  --muted:   #8C8070;
+  --banana:  #E8A838;
+  --peel:    #B87A10;
+  --green:   #4CAF50;
+  --red:     #E05A3A;
+  --blue:    #3B82F6;
+  --r:       12px;
+  --dock-h:  86px;
+}
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: 'Nanum Gothic', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════
+   MAIN AREA (above dock)
+══════════════════════════════════════════════ */
+#main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ══════════════════════════════════════════════
+   PANELS (slide in/out)
+══════════════════════════════════════════════ */
+.panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity .25s, transform .25s;
+}
+.panel.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════
+   PANEL: HOME (취준 대시보드)
+══════════════════════════════════════════════ */
+#panel-home {
+  padding: 24px 28px 16px;
+  overflow-y: auto;
+}
+.home-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.home-title {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 22px;
+  color: var(--banana);
+}
+.home-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.hgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hgrid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.span2 { grid-column: span 2; }
+
+.card {
+  background: var(--surface);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+}
+.card-title {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  letter-spacing: .05em;
+}
+.score-big {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 58px;
+  line-height: 1;
+}
+.grade-ring {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.verdict { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+.gS{color:#F39C12} .gA{color:var(--green)} .gB{color:var(--blue)} .gC{color:#9B59B6} .gD{color:var(--red)}
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 700;
+}
+.t-bonus   { background: rgba(46,204,113,.15); color: #2ECC71; border: 1px solid rgba(46,204,113,.3); }
+.t-penalty { background: rgba(231,76,60,.15);  color: #E74C3C; border: 1px solid rgba(231,76,60,.3); }
+.t-ok      { background: rgba(59,130,246,.15); color: #60A5FA; border: 1px solid rgba(59,130,246,.3); }
+
+.prog-item { margin-bottom: 10px; }
+.prog-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; font-weight: 700; margin-bottom: 4px; color: var(--muted);
+}
+.prog-bar { height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.prog-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--banana), var(--peel));
+  transition: width 1.2s cubic-bezier(.34,1.56,.64,1);
+  width: 0%;
+}
+
+.todo-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: opacity .2s;
+}
+.todo-item:last-child { border-bottom: none; }
+.todo-item.done { opacity: .4; }
+.chk {
+  width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0;
+  border: 2px solid var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 11px; transition: background .2s;
+}
+.todo-item.done .chk { background: var(--green); border-color: var(--green); }
+.todo-txt { font-size: 12px; line-height: 1.5; }
+.todo-item.done .todo-txt { text-decoration: line-through; color: var(--muted); }
+
+.run-bar {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 14px;
+}
+.company-input {
+  flex: 1; padding: 9px 13px;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-family: 'Nanum Gothic', sans-serif; font-size: 13px; outline: none;
+  transition: border-color .2s;
+}
+.company-input:focus { border-color: var(--banana); }
+.run-btn {
+  background: var(--banana); border: none; border-radius: 8px;
+  padding: 9px 20px; font-family: 'Do Hyeon', sans-serif; font-size: 14px;
+  color: #1A1200; cursor: pointer; transition: all .15s;
+  box-shadow: 0 2px 8px rgba(255,225,53,.3);
+}
+.run-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,225,53,.4); }
+.run-btn:disabled { opacity: .4; pointer-events: none; }
+
+.logbox {
+  background: var(--bg);
+  color: var(--text);;
+  border-radius: 8px; padding: 10px 12px;
+  font-family: 'Courier New', monospace; font-size: 11px;
+  max-height: 100px; overflow-y: auto; line-height: 1.7;
+  border: 1px solid var(--border);
+}
+
+.stat-num { font-family: 'Do Hyeon', sans-serif; font-size: 36px; line-height: 1; }
+.stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+.chart-wrap { position: relative; height: 160px; }
+
+/* ══════════════════════════════════════════════
+   PANEL: CHAT (1:1 or group)
+══════════════════════════════════════════════ */
+#panel-chat {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.chat-agent-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.chat-agent-name {
+  font-family: 'Do Hyeon', sans-serif; font-size: 16px;
+}
+.chat-agent-role { font-size: 11px; color: var(--muted); }
+.chat-mode-btn {
+  margin-left: auto;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 12px;
+  font-family: 'Do Hyeon', sans-serif; font-size: 12px;
+  color: var(--muted); cursor: pointer; transition: all .15s;
+}
+.chat-mode-btn.active { background: var(--banana); color: #1A1200; border-color: var(--banana); }
+
+.chat-group-selector {
+  display: none;
+  padding: 10px 16px;
+  background: var(--surf2);
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chat-group-selector.show { display: flex; }
+.agent-chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border); cursor: pointer;
+  font-size: 12px; transition: all .15s;
+  user-select: none;
+}
+.agent-chip.selected { border-color: var(--banana); background: rgba(255,225,53,.1); }
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.msg-row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-end;
+}
+.msg-row.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.msg-bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  position: relative;
+}
+.msg-row.user .msg-bubble {
+  background: var(--banana);
+  color: #1A1200;
+  border-radius: 16px 16px 4px 16px;
+}
+.msg-row.assistant .msg-bubble {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 16px 4px;
+}
+.msg-meta {
+  font-size: 10px; color: var(--muted);
+  margin-top: 3px;
+  display: flex; align-items: center; gap: 6px;
+}
+.tts-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 12px; padding: 0;
+  transition: color .15s;
+}
+.tts-btn:hover { color: var(--banana); }
+.msg-typing {
+  display: flex; gap: 4px; align-items: center; padding: 12px 14px;
+}
+.dot-typing {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted); animation: typing-dot 1.2s infinite;
+}
+.dot-typing:nth-child(2) { animation-delay: .2s; }
+.dot-typing:nth-child(3) { animation-delay: .4s; }
+@keyframes typing-dot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+.chat-input-bar {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: flex-end;
+  flex-shrink: 0;
+}
+.chat-input {
+  flex: 1;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'Nanum Gothic', sans-serif;
+  font-size: 13px;
+  resize: none;
+  outline: none;
+  max-height: 120px;
+  line-height: 1.5;
+  transition: border-color .2s;
+}
+.chat-input:focus { border-color: var(--banana); }
+.send-btn {
+  width: 38px; height: 38px;
+  background: var(--banana);
+  border: none; border-radius: 10px;
+  cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s;
+  box-shadow: 0 2px 8px rgba(255,225,53,.25);
+}
+.send-btn:hover { transform: scale(1.05); }
+.send-btn:disabled { opacity: .4; pointer-events: none; }
+
+/* ══════════════════════════════════════════════
+   PANEL: SETTINGS (에이전트 설정)
+══════════════════════════════════════════════ */
+#panel-settings {
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+.settings-title {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 18px; color: var(--banana);
+  margin-bottom: 16px;
+}
+.agent-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.agent-card-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.agent-big-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.agent-card-name {
+  font-family: 'Do Hyeon', sans-serif; font-size: 16px;
+}
+.agent-card-role { font-size: 11px; color: var(--muted); }
+.field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; color: var(--muted); font-weight: 700; }
+.field input, .field select, .field textarea {
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 11px;
+  color: var(--text);
+  font-family: 'Nanum Gothic', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--banana); }
+.field textarea { resize: vertical; min-height: 70px; }
+.save-btn {
+  background: var(--banana); border: none; border-radius: 7px;
+  padding: 7px 16px; font-family: 'Do Hyeon', sans-serif; font-size: 13px;
+  color: #1A1200; cursor: pointer; margin-top: 6px;
+}
+.save-btn:hover { opacity: .85; }
+.lottie-preview {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════
+   MAC DOCK
+══════════════════════════════════════════════ */
+#dock {
+  height: var(--dock-h);
+  background: rgba(253, 250, 245, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255,255,255,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+
+.dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+  user-select: none;
+  position: relative;
+  padding: 6px 4px 0;
+}
+
+.dock-item:hover { transform: translateY(-12px) scale(1.15); }
+.dock-item:hover .dock-neighbors { transform: translateY(-6px) scale(1.07); }
+
+.dock-icon {
+  width: 54px; height: 54px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  position: relative;
+  transition: box-shadow .2s;
+  overflow: hidden;
+}
+.dock-item:hover .dock-icon {
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 0 0 2px rgba(255,255,255,.1);
+}
+.dock-item.active-panel .dock-icon {
+  box-shadow: 0 0 0 2px var(--banana);
+}
+.dock-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--banana);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.dock-item.active-panel .dock-dot { opacity: 1; }
+.dock-label {
+  font-size: 9px; color: var(--muted);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .15s;
+  position: absolute;
+  bottom: -5px;
+  background: rgba(0,0,0,.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.dock-item:hover .dock-label { opacity: 1; }
+
+/* 드래그 중 */
+.dock-item.dragging {
+  opacity: .4;
+  transform: scale(.9);
+}
+.dock-item.drag-over {
+  transform: translateX(8px);
+}
+
+/* 구분선 */
+.dock-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,.1);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* 홈/설정 고정 아이콘 */
+.dock-fixed {
+  width: 54px; height: 54px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.dock-fixed:hover {
+  background: var(--surface);
+  transform: translateY(-8px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+
+/* ══════════════════════════════════════════════
+   GROUP CHAT BUBBLE (agent label)
+══════════════════════════════════════════════ */
+.group-agent-label {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+  padding-left: 39px;
+}
+
+/* ══════════════════════════════════════════════
+   SCROLLBAR GLOBAL
+══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ══════════════════════════════════════════════
+   STATUS BADGE
+══════════════════════════════════════════════ */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; padding: 3px 9px;
+  border-radius: 20px; font-weight: 700;
+}
+.badge-running { background: rgba(59,130,246,.15); color: #60A5FA; }
+.badge-done    { background: rgba(46,204,113,.15); color: #2ECC71; }
+.badge-idle    { background: var(--surf2); color: var(--muted); }
+.badge-error   { background: rgba(231,76,60,.15); color: #E74C3C; }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge-running .badge-dot { animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* ══════════════════════════════════════════════
+   HISTORY TABLE
+══════════════════════════════════════════════ */
+.hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.hist-table th {
+  text-align: left; padding: 8px 12px;
+  background: var(--surf2); color: var(--muted);
+  font-size: 11px; font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.hist-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+.hist-table tr:hover td { background: var(--surf2); }
+
+/* TABS inside panel */
+.tab-row {
+  display: flex; gap: 4px;
+  padding: 12px 16px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.tab-pill {
+  font-family: 'Do Hyeon', sans-serif; font-size: 13px;
+  padding: 6px 14px; border-radius: 8px 8px 0 0;
+  border: 1px solid transparent; border-bottom: none;
+  cursor: pointer; color: var(--muted); transition: all .15s;
+  background: transparent;
+}
+.tab-pill.on {
+  background: var(--bg); color: var(--banana);
+  border-color: var(--border);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     MAIN PANELS
+══════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- ── PANEL: HOME ──────────────────────── -->
+  <div class="panel active" id="panel-home">
+    <div class="home-header">
+      <div>
+        <div class="home-title">🌲 에바 에이전트 팀</div>
+        <div class="home-sub" id="homeSub">오늘도 파이팅!</div>
+      </div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <span class="status-badge badge-idle" id="statusBadge">
+          <span class="badge-dot"></span><span id="statusTxt">대기 중</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- 실행 바 -->
+    <div class="run-bar">
+      <input class="company-input" id="companyIn" value="기업명을 입력해주세요." placeholder="기관명...">
+      <button class="run-btn" id="runBtn" onclick="runAnalysis()">🔍 분석</button>
+    </div>
+
+    <div class="hgrid" style="margin-bottom:14px;">
+      <!-- 스코어 -->
+      <div class="card">
+        <div class="card-title">오늘의 스코어</div>
+        <div style="display:flex;align-items:flex-end;gap:10px;">
+          <div class="score-big gS" id="scoreNum">--</div>
+          <div>
+            <div class="grade-ring" id="gradeRing" style="color:var(--muted)">?</div>
+          </div>
+        </div>
+        <div class="verdict" id="verdictTxt">분석을 실행하면 표시됩니다.</div>
+      </div>
+
+      <!-- 가점/감점 -->
+      <div class="card">
+        <div class="card-title">가점 / 감점 항목</div>
+        <div class="tags" id="tagList">
+          <span class="tag t-ok">대기 중</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hgrid" style="margin-bottom:14px;">
+      <!-- 스펙 진행률 -->
+      <div class="card">
+        <div class="card-title">스펙 보완 진행률</div>
+        <div id="progList"></div>
+      </div>
+
+      <!-- 투두 -->
+      <div class="card">
+        <div class="card-title">오늘의 할 일</div>
+        <div id="todoList" style="font-size:12px;color:var(--muted);">분석 완료 후 생성됩니다.</div>
+      </div>
+    </div>
+
+    <!-- 로그 -->
+    <div class="card span2" style="margin-bottom:14px;">
+      <div class="card-title">실행 로그</div>
+      <div class="logbox" id="logBox"></div>
+    </div>
+
+    <!-- 히스토리/통계 탭 -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="tab-row">
+        <button class="tab-pill on" onclick="switchHomeTab('hist',this)">📅 기록지</button>
+        <button class="tab-pill" onclick="switchHomeTab('chart',this)">📈 통계</button>
+      </div>
+      <div style="padding:14px 16px;">
+        <div id="homeTabHist">
+          <div style="overflow-x:auto;">
+            <table class="hist-table">
+              <thead><tr>
+                <th>날짜</th><th>기관</th><th>등급</th><th>점수</th><th>투두완료율</th>
+              </tr></thead>
+              <tbody id="histBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">기록 없음</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div id="homeTabChart" style="display:none;">
+          <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:20px;"></div>
+  </div>
+
+  <!-- ── PANEL: CHAT ──────────────────────── -->
+  <div class="panel" id="panel-chat">
+
+    <!-- 상단 바 -->
+    <div class="chat-topbar">
+      <div class="chat-agent-icon" id="chatIcon" style="background:rgba(255,225,53,.15)">🍌</div>
+      <div>
+        <div class="chat-agent-name" id="chatName">에바 에이전트 팀</div>
+        <div class="chat-agent-role" id="chatRole">취준 전략 비서</div>
+      </div>
+      <button class="chat-mode-btn" id="mode1on1" onclick="setMode('1on1')" style="margin-left:auto;">1:1</button>
+      <button class="chat-mode-btn" id="modeGroup" onclick="setMode('group')">그룹</button>
+    </div>
+
+    <!-- 그룹 에이전트 선택 -->
+    <div class="chat-group-selector" id="groupSelector"></div>
+
+    <!-- 메시지 영역 -->
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <!-- 입력 -->
+    <div class="chat-input-bar">
+      <textarea class="chat-input" id="chatInput" rows="1"
+        placeholder="메시지 입력... (Enter 전송, Shift+Enter 줄바꿈)"
+        oninput="autoResize(this)"
+        onkeydown="handleChatKey(event)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+    </div>
+  </div>
+
+  <!-- ── PANEL: SETTINGS ─────────────────── -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-title">⚙️ 에이전트 설정</div>
+    <div id="settingsContent">로딩 중...</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     DOCK
+══════════════════════════════════════════ -->
+<div id="dock">
+  <!-- 고정: 홈 -->
+  <div class="dock-fixed" onclick="openPanel('home')" title="홈">🏠</div>
+  <div class="dock-divider"></div>
+
+  <!-- 에이전트 아이콘 (JS로 생성) -->
+  <div id="dockAgents" style="display:flex;align-items:center;gap:6px;"></div>
+
+  <div class="dock-divider"></div>
+  <!-- 고정: 설정 -->
+  <div class="dock-fixed" onclick="openPanel('settings')" title="설정">⚙️</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ── 전역 상태 ─────────────────────────────────────────────────────
+let agents        = [];
+let currentAgent  = null;   // 1:1 채팅 대상 에이전트
+let chatMode      = '1on1'; // '1on1' | 'group'
+let groupSelected = [];     // 그룹 채팅 참여 에이전트 IDs
+let pollTimer     = null;
+let scoreChart    = null;
+let dragSrcIdx    = null;
+let homeTab       = 'hist';
+
+// ── 초기화 ───────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('homeSub').textContent =
+    new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  await loadAgents();
+  fetchState();
+  loadHistory();
+});
+
+// ── 에이전트 로드 & Dock 빌드 ───────────────────────────────────
+async function loadAgents() {
+  const res = await fetch('/api/agents');
+  agents    = await res.json();
+  buildDock();
+  buildGroupSelector();
+  buildSettings();
+}
+
+function buildDock() {
+  const container = document.getElementById('dockAgents');
+  container.innerHTML = '';
+  agents.forEach((ag, idx) => {
+    const item = document.createElement('div');
+    item.className  = 'dock-item';
+    item.dataset.id = ag.id;
+    item.dataset.idx = idx;
+    item.draggable  = true;
+    item.innerHTML  = `
+      <div class="dock-icon" style="background:${ag.color}22;overflow:hidden;border-radius:50%;" id="dockIcon-${ag.id}">
+        <video src="/static/${ag.id}/idle.mp4"
+          autoplay loop muted playsinline
+          style="width:54px;height:54px;object-fit:cover;object-position:center 15%;display:block;">
+        </video>
+      </div>
+      <div class="dock-dot"></div>
+      <div class="dock-label">${ag.name}</div>
+    `;
+    item.addEventListener('click', () => openChat(ag.id));
+    item.addEventListener('dragstart', onDragStart);
+    item.addEventListener('dragover',  onDragOver);
+    item.addEventListener('drop',      onDrop);
+    item.addEventListener('dragend',   onDragEnd);
+    container.appendChild(item);
+
+    // Lottie 로드
+    if (ag.lottie_url) loadLottie(ag.id, ag.lottie_url);
+  });
+}
+
+function loadLottie(agentId, url) {
+  if (!url) return;
+  const el = document.getElementById('lottie-' + agentId);
+  const em = document.getElementById('emoji-'  + agentId);
+  if (!el) return;
+  el.style.display = 'block';
+  em.style.display = 'none';
+  lottie.loadAnimation({
+    container: el,
+    renderer:  'svg',
+    loop:      true,
+    autoplay:  true,
+    path:      url,
+  });
+}
+
+// ── Dock 드래그&드롭 ─────────────────────────────────────────────
+function onDragStart(e) {
+  dragSrcIdx = parseInt(e.currentTarget.dataset.idx);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+function onDrop(e) {
+  e.preventDefault();
+  const targetIdx = parseInt(e.currentTarget.dataset.idx);
+  if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+
+  // 순서 변경
+  const moved = agents.splice(dragSrcIdx, 1)[0];
+  agents.splice(targetIdx, 0, moved);
+  agents.forEach((a, i) => a.dock_order = i);
+
+  buildDock();
+  fetch('/api/agents', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(agents),
+  });
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  dragSrcIdx = null;
+}
+
+// ── 패널 열기 ────────────────────────────────────────────────────
+function openPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active-panel'));
+  document.getElementById('panel-' + name)?.classList.add('active');
+}
+
+function openChat(agentId) {
+  const ag = agents.find(a => a.id === agentId);
+  if (!ag) return;
+  currentAgent = ag;
+
+  // 패널 열기
+  openPanel('chat');
+
+  // Dock 활성 표시
+  document.querySelectorAll('.dock-item').forEach(d => {
+    d.classList.toggle('active-panel', d.dataset.id === agentId);
+  });
+
+  // 상단 바 업데이트
+  document.getElementById('chatIcon').textContent = ag.emoji;
+  document.getElementById('chatIcon').style.background = ag.color + '22';
+  document.getElementById('chatName').textContent = ag.name;
+  document.getElementById('chatRole').textContent = ag.role;
+
+  setMode('1on1');
+  loadChatHistory(agentId);
+}
+
+// ── 채팅 모드 ────────────────────────────────────────────────────
+function setMode(mode) {
+  chatMode = mode;
+  document.getElementById('mode1on1').classList.toggle('active', mode === '1on1');
+  document.getElementById('modeGroup').classList.toggle('active', mode === 'group');
+  document.getElementById('groupSelector').classList.toggle('show', mode === 'group');
+
+  if (mode === 'group') {
+    loadChatHistory('group');
+  } else if (currentAgent) {
+    loadChatHistory(currentAgent.id);
+  }
+}
+
+function buildGroupSelector() {
+  const sel = document.getElementById('groupSelector');
+  sel.innerHTML = '<span style="font-size:11px;color:var(--muted);align-self:center;">참여:</span>';
+  agents.forEach(ag => {
+    const chip = document.createElement('div');
+    chip.className = 'agent-chip';
+    chip.dataset.id = ag.id;
+    chip.innerHTML = `${ag.emoji} ${ag.name}`;
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      groupSelected = [...document.querySelectorAll('.agent-chip.selected')]
+                        .map(c => c.dataset.id);
+    });
+    sel.appendChild(chip);
+  });
+  // 기본 전체 선택
+  setTimeout(() => {
+    document.querySelectorAll('.agent-chip').forEach(c => {
+      c.classList.add('selected');
+      groupSelected.push(c.dataset.id);
+    });
+  }, 100);
+}
+
+// ── 채팅 히스토리 로드 ───────────────────────────────────────────
+async function loadChatHistory(agentId) {
+  const endpoint = agentId === 'group' ? '/api/chat/group/history' : `/api/chat/${agentId}`;
+  try {
+    const res  = await fetch(endpoint);
+    const msgs = await res.json();
+    renderMessages(msgs, agentId);
+  } catch { renderMessages([], agentId); }
+}
+
+function renderMessages(msgs, agentId) {
+  const box = document.getElementById('chatMessages');
+  box.innerHTML = '';
+  if (!msgs.length) {
+    const ag = agents.find(a => a.id === agentId);
+    box.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:40px;">
+      ${ag ? ag.emoji : '💬'} ${ag ? ag.name + '에게' : ''} 첫 메시지를 보내보세요!
+    </div>`;
+    return;
+  }
+  msgs.forEach(m => appendMessage(m, false));
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendMessage(msg, scroll = true) {
+  const box = document.getElementById('chatMessages');
+  const isUser = msg.role === 'user';
+  const ag = agents.find(a => a.id === (msg.agent_id || currentAgent?.id));
+
+  const row = document.createElement('div');
+
+  // 그룹 채팅이면 에이전트 이름 라벨 표시
+  if (!isUser && msg.agent_name && chatMode === 'group') {
+    const lbl = document.createElement('div');
+    lbl.className = 'group-agent-label';
+    lbl.textContent = msg.agent_name;
+    box.appendChild(lbl);
+  }
+
+  row.className = `msg-row ${isUser ? 'user' : 'assistant'}`;
+  const iconContent = isUser ? '🙋' : (ag?.emoji || '🤖');
+  const bgColor     = isUser ? '' : (ag ? ag.color + '22' : 'rgba(255,255,255,.05)');
+
+  row.innerHTML = `
+    <div class="msg-avatar" style="background:${bgColor};">${iconContent}</div>
+    <div>
+      <div class="msg-bubble">${escHtml(msg.content)}</div>
+      <div class="msg-meta">
+        <span>${formatTime(msg.ts)}</span>
+        ${!isUser ? `<button class="tts-btn" onclick="playTTS('${msg.agent_id || currentAgent?.id}', this)" title="음성 듣기">🔊</button>` : ''}
+      </div>
+    </div>
+  `;
+  box.appendChild(row);
+  if (scroll) box.scrollTop = box.scrollHeight;
+}
+
+function showTyping() {
+  const box = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg-row assistant';
+  div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:rgba(255,225,53,.1);">
+      ${currentAgent?.emoji || '🤖'}
+    </div>
+    <div class="msg-bubble msg-typing">
+      <div class="dot-typing"></div>
+      <div class="dot-typing"></div>
+      <div class="dot-typing"></div>
+    </div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function hideTyping() {
+  document.getElementById('typingIndicator')?.remove();
+}
+
+// ── 메시지 전송 ──────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  // 유저 메시지 즉시 표시
+  appendMessage({ role: 'user', content: text, ts: new Date().toISOString() });
+  showTyping();
+
+  try {
+    if (chatMode === 'group') {
+      const res  = await fetch('/api/chat/group', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ message: text, agents: groupSelected }),
+      });
+      const data = await res.json();
+      hideTyping();
+      (data.responses || []).forEach(r => {
+        appendMessage({
+          role: 'assistant', content: r.reply,
+          agent_id: r.agent_id, agent_name: r.agent_name,
+          ts: new Date().toISOString(),
+        });
+      });
+    } else {
+      if (!currentAgent) { hideTyping(); return; }
+      const res  = await fetch(`/api/chat/${currentAgent.id}`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      hideTyping();
+      appendMessage({
+        role: 'assistant', content: data.reply,
+        agent_id: currentAgent.id,
+        ts: new Date().toISOString(),
+      });
+    }
+  } catch (e) {
+    hideTyping();
+    appendMessage({ role: 'assistant', content: `⚠️ 오류: ${e.message}`, ts: new Date().toISOString() });
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('chatInput').focus();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── TTS ──────────────────────────────────────────────────────────
+async function playTTS(agentId, btn) {
+  const bubble = btn.closest('.msg-row')?.querySelector('.msg-bubble');
+  if (!bubble) return;
+  const text = bubble.textContent.trim();
+  if (!text) return;
+
+  btn.textContent = '⏳';
+  try {
+    const res = await fetch(`/api/tts/${agentId}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error('TTS 실패');
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+    btn.textContent = '🔊';
+  } catch {
+    btn.textContent = '🔇';
+    setTimeout(() => btn.textContent = '🔊', 2000);
+  }
+}
+
+// ── 설정 패널 빌드 ───────────────────────────────────────────────
+function buildSettings() {
+  const container = document.getElementById('settingsContent');
+  container.innerHTML = agents.map(ag => `
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-big-icon" style="background:${ag.color}22;">${ag.emoji}</div>
+        <div>
+          <div class="agent-card-name">${ag.name}</div>
+          <div class="agent-card-role">${ag.role}</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label>이름</label>
+          <input id="set-name-${ag.id}" value="${ag.name}">
+        </div>
+        <div class="field">
+          <label>이모지</label>
+          <input id="set-emoji-${ag.id}" value="${ag.emoji}">
+        </div>
+        <div class="field">
+          <label>AI 모델</label>
+          <select id="set-model-${ag.id}">
+            ${['gpt-4o','gpt-4o-mini','claude-opus-4-6','claude-sonnet-4-6','claude-haiku-4-5-20251001']
+              .map(m => `<option ${ag.model===m?'selected':''}>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>공급자</label>
+          <select id="set-provider-${ag.id}">
+            <option ${ag.provider==='openai'?'selected':''}>openai</option>
+            <option ${ag.provider==='anthropic'?'selected':''}>anthropic</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>TTS 음성 (ElevenLabs)</label>
+          <input id="set-tts-${ag.id}" value="${ag.tts_voice || ''}">
+        </div>
+        <div class="field">
+          <label>Lottie JSON URL</label>
+          <input id="set-lottie-${ag.id}" value="${ag.lottie_url || ''}" placeholder="https://...">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:10px;">
+        <label>시스템 프롬프트</label>
+        <textarea id="set-sys-${ag.id}">${ag.system_prompt || ''}</textarea>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>성격 설명</label>
+        <textarea id="set-pers-${ag.id}" style="min-height:50px;">${ag.personality || ''}</textarea>
+      </div>
+
+      <button class="save-btn" onclick="saveAgent('${ag.id}')">💾 저장</button>
+    </div>
+  `).join('');
+}
+
+async function saveAgent(agentId) {
+  const patch = {
+    name:          document.getElementById(`set-name-${agentId}`).value,
+    emoji:         document.getElementById(`set-emoji-${agentId}`).value,
+    model:         document.getElementById(`set-model-${agentId}`).value,
+    provider:      document.getElementById(`set-provider-${agentId}`).value,
+    tts_voice:     document.getElementById(`set-tts-${agentId}`).value,
+    lottie_url:    document.getElementById(`set-lottie-${agentId}`).value,
+    system_prompt: document.getElementById(`set-sys-${agentId}`).value,
+    personality:   document.getElementById(`set-pers-${agentId}`).value,
+  };
+  await fetch(`/api/agents/${agentId}`, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(patch),
+  });
+  await loadAgents();
+  alert(`✅ ${patch.name} 설정 저장 완료!`);
+}
+
+// ── 분석 에이전트 ────────────────────────────────────────────────
+async function runAnalysis() {
+  const company = document.getElementById('companyIn').value.trim();
+  if (!company) return;
+  document.getElementById('runBtn').disabled = true;
+  await fetch('/api/run', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ company }),
+  });
+  if (!pollTimer) pollTimer = setInterval(fetchState, 2000);
+}
+
+async function fetchState() {
+  const d = await (await fetch('/api/state')).json();
+  updateHomePanel(d);
+}
+
+function updateHomePanel(d) {
+  const smap = {
+    idle:    { txt: '대기 중',  cls: 'badge-idle' },
+    running: { txt: '분석 중',  cls: 'badge-running' },
+    done:    { txt: '완료 ✅',  cls: 'badge-done' },
+    error:   { txt: '오류 ❌',  cls: 'badge-error' },
+  };
+  const s = smap[d.status] || smap.idle;
+  const badge = document.getElementById('statusBadge');
+  badge.className = `status-badge ${s.cls}`;
+  document.getElementById('statusTxt').textContent = s.txt;
+  document.getElementById('runBtn').disabled = d.status === 'running';
+
+  if (d.score !== null) {
+    const sign = d.score >= 0 ? '+' : '';
+    document.getElementById('scoreNum').textContent = sign + d.score;
+    const ring = document.getElementById('gradeRing');
+    ring.textContent = d.grade;
+    ring.style.color = {S:'#F39C12',A:'#2ECC71',B:'#3B82F6',C:'#9B59B6',D:'#E74C3C'}[d.grade] || 'var(--muted)';
+    document.getElementById('verdictTxt').textContent = d.verdict || '';
+  }
+
+  if (d.bonuses?.length || d.penalties?.length) {
+    const tl = document.getElementById('tagList');
+    tl.innerHTML = '';
+    (d.bonuses || []).forEach(b =>
+      tl.innerHTML += `<span class="tag t-bonus">+${b.score} ${b.label}</span>`);
+    (d.penalties || []).forEach(p => {
+      const c = p.score === 0 ? 't-ok' : 't-penalty';
+      tl.innerHTML += `<span class="tag ${c}">${p.score>0?'+':''}${p.score} ${p.label}</span>`;
+    });
+  }
+
+  if (d.spec_progress?.length) {
+    document.getElementById('progList').innerHTML = d.spec_progress.map(p => `
+      <div class="prog-item">
+        <div class="prog-label"><span>${p.label}</span><span>${p.pct}%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${p.pct}%"></div></div>
+      </div>`).join('');
+  }
+
+  if (d.todos?.length) {
+    document.getElementById('todoList').innerHTML = d.todos.map((t,i) => `
+      <div class="todo-item ${t.done?'done':''}" onclick="toggleTodo(${i})">
+        <div class="chk">${t.done?'✓':''}</div>
+        <div class="todo-txt">${t.text}</div>
+      </div>`).join('');
+  }
+
+  if (d.log?.length) {
+    const lb = document.getElementById('logBox');
+    lb.innerHTML = d.log.map(l => `<div>${l}</div>`).join('');
+    lb.scrollTop = lb.scrollHeight;
+  }
+
+  if (d.status === 'running') {
+    if (!pollTimer) pollTimer = setInterval(fetchState, 2000);
+  } else {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (d.status === 'done') { loadHistory(); loadChart(); }
+  }
+}
+
+async function toggleTodo(idx) {
+  await fetch(`/api/todos/toggle/${idx}`, { method: 'POST' });
+  fetchState();
+}
+
+// ── 히스토리 & 차트 ──────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const records = await (await fetch('/api/history')).json();
+    const tbody   = document.getElementById('histBody');
+    if (!records.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:18px;">아직 기록 없음</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = records.map(r => {
+      const gc = {S:'#F39C12',A:'#2ECC71',B:'#3B82F6',C:'#9B59B6',D:'#E74C3C'};
+      return `<tr>
+        <td style="font-size:11px;">${r.date}</td>
+        <td>${r.company}</td>
+        <td style="color:${gc[r.grade]||'#fff'};font-family:'Do Hyeon',sans-serif;font-size:16px;">${r.grade}</td>
+        <td style="color:${gc[r.grade]||'#fff'};font-family:'Do Hyeon',sans-serif;">${r.score>=0?'+':''}${r.score}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${r.todo_rate||0}%;background:var(--green);border-radius:3px;"></div>
+            </div>
+            <span style="font-size:10px;color:var(--muted);">${r.todo_rate||0}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch {}
+}
+
+async function loadChart() {
+  try {
+    const series = await (await fetch('/api/history/chart')).json();
+    if (!series.length) return;
+    const gc = {S:'#F39C12',A:'#2ECC71',B:'#3B82F6',C:'#9B59B6',D:'#E74C3C'};
+    if (scoreChart) scoreChart.destroy();
+    scoreChart = new Chart(document.getElementById('scoreChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: series.map(s => s.date.slice(5)),
+        datasets: [{
+          data: series.map(s => s.score),
+          backgroundColor: series.map(s => (gc[s.grade]||'#FFE135') + '88'),
+          borderColor:     series.map(s => gc[s.grade]||'#FFE135'),
+          borderRadius: 5, borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: c => `${c.raw>=0?'+':''}${c.raw}점` } }},
+        scales: {
+          y: { grid:{ color:'rgba(255,255,255,.05)' }, ticks:{ color:'#6B6880', font:{size:10} } },
+          x: { grid:{ display:false }, ticks:{ color:'#6B6880', font:{size:10} } },
+        }
+      }
+    });
+  } catch {}
+}
+
+function switchHomeTab(tab, btn) {
+  homeTab = tab;
+  document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('homeTabHist').style.display  = tab === 'hist'  ? '' : 'none';
+  document.getElementById('homeTabChart').style.display = tab === 'chart' ? '' : 'none';
+  if (tab === 'chart') loadChart();
+}
+
+// ── 유틸 ─────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+}
+function formatTime(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }
+  catch { return ''; }
+}
+
+// 그룹 채팅 히스토리 엔드포인트 (서버에 없으면 빈배열 반환)
+// 서버 /api/chat/group/history 는 server_v3.py 에서 _load_chats()['group'] 반환
+</script>
+</body>
+</html>

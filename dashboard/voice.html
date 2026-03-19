@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVA 에이전트 팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:       #FDFAF5;
+  --cream2:      #F5F0E8;
+  --warm-gray:   #8C8070;
+  --text:        #2C2416;
+  --text-soft:   #7A6E60;
+  --border:      rgba(180,160,130,.2);
+  --shadow:      rgba(80,60,30,.12);
+  --accent:      #E8A838;
+  --accent-soft: rgba(232,168,56,.15);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: 'Nanum Gothic', sans-serif;
+  background: transparent;
+  color: var(--text);
+}
+
+/* ══════════════════════════
+   DOCK — 크림색 플로팅 바
+══════════════════════════ */
+#dock {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  margin: 0 auto 10px;
+  width: fit-content;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 16px 8px;
+  background: rgba(253,250,245,.92);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow:
+    0 4px 24px var(--shadow),
+    0 1px 0 rgba(255,255,255,.9) inset;
+}
+#dock .agent-card,
+#dock .char-wrap,
+#dock .char-video,
+#dock .dock-sep,
+#dock .dock-action,
+#dock button,
+#dock .notify-badge { cursor: pointer; }
+
+/* ══════════════════════════
+   캐릭터 카드 — 원 없이 자연스럽게
+══════════════════════════ */
+.agent-card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.agent-card:hover { transform: translateY(-12px) scale(1.07); }
+.agent-card.has-notify { animation: nudge 2.5s ease-in-out infinite; }
+@keyframes nudge {
+  0%,100% { transform: translateY(0); }
+  25%     { transform: translateY(-10px) scale(1.05); }
+  50%     { transform: translateY(-3px); }
+  75%     { transform: translateY(-7px) scale(1.03); }
+}
+
+.char-wrap {
+  position: relative;
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  overflow: hidden;
+  /* 크림색 테두리 — Dock 배경과 어우러지게 */
+  box-shadow:
+    0 0 0 3px var(--cream),
+    0 4px 16px var(--shadow);
+  background: var(--cream2);
+  flex-shrink: 0;
+}
+.char-video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 20%;  /* 얼굴 중심 */
+  background: var(--cream2);
+  display: block;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.agent-card:hover .char-video {
+  transform: scale(1.08);
+}
+.agent-card.speaking .char-video {
+  animation: speak-pulse .6s ease-in-out infinite alternate;
+}
+@keyframes speak-pulse {
+  from { box-shadow: 0 0 0 3px var(--cream), 0 4px 16px rgba(232,168,56,.3); }
+  to   { box-shadow: 0 0 0 4px rgba(232,168,56,.7), 0 4px 24px rgba(232,168,56,.5); }
+}
+.char-emoji-fallback {
+  display: none; width: 88px; height: 108px;
+  align-items: center; justify-content: center; font-size: 52px;
+}
+
+.notify-badge {
+  position: absolute; top: 2px; right: -2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #E05A3A;
+  border: 2px solid var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: #fff;
+  opacity: 0; transform: scale(0);
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+}
+.notify-badge.show { opacity: 1; transform: scale(1); }
+
+.agent-label {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 11px; color: var(--text-soft);
+  white-space: nowrap; transition: color .2s;
+  letter-spacing: .03em;
+}
+.agent-card:hover .agent-label { color: var(--text); }
+
+/* 구분선 */
+.dock-sep {
+  width: 1px; height: 52px;
+  background: var(--border); margin: 0 6px; align-self: center;
+}
+
+/* 대시보드 버튼 */
+.dock-action {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  cursor: pointer; transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  text-decoration: none;
+}
+.dock-action:hover { transform: translateY(-6px); }
+.dock-icon {
+  width: 44px; height: 44px; border-radius: 13px;
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: background .2s, box-shadow .2s;
+}
+.dock-action:hover .dock-icon {
+  background: #fff;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+.dock-action-label {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 10px; color: var(--text-soft);
+}
+
+/* ══════════════════════════
+   알림 버블 — 크림색 말풍선
+══════════════════════════ */
+.notify-bubble {
+  position: fixed;
+  bottom: 190px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 16px 4px;
+  padding: 12px 14px;
+  font-size: 13px; line-height: 1.55;
+  max-width: 260px;
+  pointer-events: none; opacity: 0;
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 8px 32px var(--shadow);
+  z-index: 500;
+  color: var(--text);
+}
+.notify-bubble.show {
+  opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto;
+}
+.notify-bubble::after {
+  content: ''; position: absolute; bottom: -7px; left: 20px;
+  border-left: 6px solid transparent; border-right: 6px solid transparent;
+  border-top: 7px solid var(--cream);
+}
+.bubble-msg { margin-bottom: 10px; color: var(--text); }
+.bubble-actions { display: flex; gap: 7px; }
+.bubble-btn {
+  flex: 1; padding: 7px 10px; border-radius: 10px; border: none;
+  font-family: 'Gowun Dodum', sans-serif; font-size: 12px; cursor: pointer;
+  transition: all .15s;
+}
+.bubble-btn.primary {
+  background: var(--text); color: var(--cream);
+}
+.bubble-btn.primary:hover { background: #4A3C28; }
+.bubble-btn.secondary {
+  background: var(--cream2); border: 1px solid var(--border); color: var(--text-soft);
+}
+.bubble-btn.secondary:hover { background: #EDE8DF; }
+
+/* ══════════════════════════
+   채팅 패널 — 따뜻한 화이트
+══════════════════════════ */
+#chatPanel {
+  position: fixed;
+  bottom: 190px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px) scale(.97);
+  width: min(460px, 94vw);
+  min-height: 260px;
+  max-height: calc(100vh - 175px);
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px var(--shadow), 0 1px 0 rgba(255,255,255,.9) inset;
+  z-index: 300;
+  display: none; flex-direction: column;
+  opacity: 0;
+  transition: opacity .3s, transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+#chatPanel.open {
+  display: flex; opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.chat-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.chat-agent-emoji { font-size: 20px; }
+.chat-agent-name {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 15px; flex: 1; color: var(--text);
+}
+.chat-agent-role { font-size: 11px; color: var(--text-soft); }
+.chat-close {
+  cursor: pointer; font-size: 20px; color: var(--warm-gray);
+  transition: color .2s; line-height: 1; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; transition: background .15s;
+}
+.chat-close:hover { background: var(--cream2); color: var(--text); }
+
+.chat-messages {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--border); border-radius: 4px;
+}
+
+.msg {
+  max-width: 82%; line-height: 1.6; font-size: 13px;
+  word-break: break-word;
+  animation: msg-pop .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes msg-pop {
+  from { transform: translateY(6px) scale(.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.msg.user {
+  align-self: flex-end;
+  background: var(--text);
+  color: var(--cream);
+  border-radius: 16px 16px 4px 16px;
+  padding: 9px 13px;
+}
+.msg.agent {
+  align-self: flex-start;
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 16px 4px;
+  padding: 9px 13px;
+  color: var(--text);
+}
+.msg.agent .msg-sender {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 10px; color: var(--text-soft); margin-bottom: 4px;
+}
+.typing-dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--warm-gray); margin: 0 2px;
+  animation: dot-bounce .9s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: .18s; }
+.typing-dot:nth-child(3) { animation-delay: .36s; }
+@keyframes dot-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+.chat-input-row {
+  display: flex; gap: 8px; padding: 10px 14px 14px;
+  border-top: 1px solid var(--border); flex-shrink: 0;
+  background: rgba(253,250,245,.6);
+  border-radius: 0 0 20px 20px;
+}
+.chat-input {
+  flex: 1; background: #fff;
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 9px 13px; color: var(--text);
+  font-family: 'Nanum Gothic', sans-serif; font-size: 13px;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.chat-input:focus {
+  border-color: rgba(180,160,130,.5);
+  box-shadow: 0 0 0 3px rgba(232,168,56,.1);
+}
+.chat-input::placeholder { color: var(--warm-gray); }
+.send-btn {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: var(--text); border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; color: var(--cream);
+  transition: background .15s, transform .15s;
+  flex-shrink: 0;
+}
+.send-btn:hover { background: #4A3C28; transform: scale(1.05); }
+.send-btn:disabled { opacity: .35; pointer-events: none; }
+
+/* ══════════════════════════
+   공고 패널
+══════════════════════════ */
+#jobPanel {
+  position:fixed; bottom:170px; right:40px;
+  width:min(360px,40vw);
+  background: var(--cream); border:1px solid var(--border);
+  border-radius:20px; backdrop-filter:blur(20px);
+  z-index:300; display:none; flex-direction:column;
+  max-height:calc(100vh - 200px);
+  box-shadow:0 24px 60px rgba(0,0,0,.7);
+}
+#jobPanel.open { display: flex; }
+.job-header {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--cream);
+}
+.job-title {
+  font-family: 'Gowun Dodum', sans-serif; font-size: 14px; color: var(--text);
+}
+.panel-close-btn {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--warm-gray); font-size: 18px;
+  transition: background .15s;
+}
+.panel-close-btn:hover { background: var(--cream2); color: var(--text); }
+.job-list { flex: 1; overflow-y: auto; padding: 8px 12px; }
+.job-item {
+  display: flex; flex-wrap: wrap; align-items: center;
+  padding: 10px 12px; border-radius: 12px;
+  background: #fff; border: 1px solid var(--border);
+  margin-bottom: 7px; cursor: pointer;
+  transition: box-shadow .15s, transform .15s;
+}
+.job-item:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+  transform: translateY(-1px);
+}
+.job-item-title { font-size: 13px; margin-bottom: 3px; width: 100%; color: var(--text); }
+.job-item-org { font-size: 11px; color: var(--text-soft); flex: 1; }
+.job-score {
+  background: var(--accent-soft); color: #B87A10;
+  border-radius: 7px; padding: 2px 7px; font-size: 11px;
+  font-family: 'Gowun Dodum', sans-serif; margin-left: auto;
+}
+
+/* ══════════════════════════
+   마이크 브리핑 패널
+══════════════════════════ */
+#mikePanel {
+  position: fixed; bottom: 190px; left: 20px;
+  width: min(320px, 88vw);
+  background: var(--cream);
+  border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: 0 16px 48px var(--shadow);
+  z-index: 300; display: none; flex-direction: column;
+  max-height: calc(100vh - 175px);
+}
+#mikePanel.open { display: flex; }
+.mike-header {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.mike-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+.mike-section { margin-bottom: 14px; }
+.mike-section-title {
+  font-family: 'Gowun Dodum', sans-serif; font-size: 11px;
+  color: var(--warm-gray); letter-spacing: .06em;
+  text-transform: uppercase; margin-bottom: 7px;
+}
+.mike-focus {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+  font-size: 13px; line-height: 1.55; color: var(--text);
+}
+.mike-todo-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid rgba(180,160,130,.1);
+  font-size: 13px;
+}
+.mike-todo-item:last-child { border-bottom: none; }
+.mike-check { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.mike-todo-text { color: var(--text); line-height: 1.45; }
+.mike-todo-text.done { color: var(--warm-gray); text-decoration: line-through; }
+.mike-progress { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mike-prog-bar {
+  flex: 1; height: 4px;
+  background: var(--cream2); border-radius: 2px; overflow: hidden;
+}
+.mike-prog-fill {
+  height: 100%; background: var(--accent); border-radius: 2px; transition: width .5s;
+}
+.mike-prog-label { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
+.mike-footer {
+  padding: 10px 14px 14px; border-top: 1px solid var(--border);
+  display: flex; gap: 7px; flex-shrink: 0;
+}
+.mike-btn {
+  flex: 1; background: var(--text); border: none;
+  border-radius: 10px; padding: 8px 12px; color: var(--cream);
+  font-family: 'Nanum Gothic', sans-serif; font-size: 12px; cursor: pointer;
+  transition: background .15s;
+}
+.mike-btn:hover { background: #4A3C28; }
+.mike-btn-outline {
+  background: var(--cream2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 12px;
+  color: var(--text-soft); font-size: 12px; cursor: pointer;
+  transition: all .15s; white-space: nowrap;
+}
+.mike-btn-outline:hover { background: #EDE8DF; color: var(--text); }
+
+/* 드래그 핸들 */
+.dock-drag-handle {
+  cursor: grab;
+}
+
+audio { display: none; }
+</style>
+</head>
+<body>
+<audio id="aiAudio" autoplay></audio>
+
+<!-- DOCK -->
+<div id="dock">
+  <div class="dock-drag-handle dock-sep" title="드래그로 이동"></div>
+  <a class="dock-action" href="/" target="_blank">
+    <div class="dock-icon">🏠</div>
+    <div class="dock-action-label">대시보드</div>
+  </a>
+  <div class="dock-action" onclick="toggleMikePanel()">
+    <div class="dock-icon">📅</div>
+    <div class="dock-action-label">주간</div>
+  </div>
+  <div class="dock-action" onclick="toggleJobPanel()">
+    <div class="dock-icon">📋</div>
+    <div class="dock-action-label">공고</div>
+  </div>
+</div>
+
+<!-- 채팅 패널 -->
+<div id="chatPanel">
+  <div class="chat-header">
+    <span class="chat-agent-emoji" id="chatEmoji">🤖</span>
+    <div style="flex:1">
+      <div class="chat-agent-name" id="chatName">설리</div>
+      <div class="chat-agent-role" id="chatRole">공기업 채용 전략가</div>
+    </div>
+    <div class="chat-close" onclick="closeChat()">×</div>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chatInput" placeholder="메시지 입력..."
+      onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="send-btn" id="sendBtn" onclick="sendMsg()">↑</button>
+  </div>
+</div>
+
+<!-- 마이크 브리핑 패널 -->
+<div id="mikePanel">
+  <div class="mike-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">📅</span>
+      <div>
+        <div style="font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--text);">마이크 브리핑</div>
+        <div style="font-size:11px;color:var(--text-soft);" id="mikeDateLabel"></div>
+      </div>
+    </div>
+    <div class="panel-close-btn" onclick="closeMikePanel()">×</div>
+  </div>
+  <div id="mikeBriefContent" class="mike-body">
+    <div style="text-align:center;color:var(--text-soft);font-size:13px;padding:20px;">불러오는 중...</div>
+  </div>
+  <div class="mike-footer">
+    <button onclick="openChat('mike')" class="mike-btn">💬 마이크에게 물어보기</button>
+    <button onclick="loadMikeBrief()" class="mike-btn-outline">↺</button>
+  </div>
+</div>
+
+<!-- 공고 패널 -->
+<div id="jobPanel">
+  <div class="job-header">
+    <span class="job-title">📋 오늘의 공고</span>
+    <div class="panel-close-btn" onclick="toggleJobPanel()">×</div>
+  </div>
+  <div class="job-list" id="jobList">
+    <div style="padding:20px;text-align:center;color:var(--text-soft);font-size:13px;">불러오는 중...</div>
+  </div>
+</div>
+
+<script>
+let agents = [], currentAgent = null, chatHistory = {}, activeBubbles = {}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadAgents()
+  buildDock()
+  startNotifyPoll()
+  setTimeout(greetOnStart, 2000)
+})
+
+async function loadAgents() {
+  try { agents = await (await fetch('/api/agents')).json() }
+  catch {
+    agents = [
+      {id:'sully',name:'설리',  emoji:'🔵',role:'공기업 채용 전략가',    color:'#1565C0',dock_order:0},
+      {id:'mike', name:'마이크',emoji:'🟢',role:'스크럼 & 시스템 매니저',color:'#2E7D32',dock_order:1},
+      {id:'roz',  name:'로즈',  emoji:'🟣',role:'교육 운영 매니저',      color:'#6A1B9A',dock_order:2},
+    ]
+  }
+}
+
+function buildDock() {
+  const dock = document.getElementById('dock')
+  const sep  = dock.querySelector('.dock-sep')
+  while (dock.firstChild && dock.firstChild !== sep) dock.removeChild(dock.firstChild)
+  agents.sort((a,b) => (a.dock_order||0) - (b.dock_order||0))
+  agents.forEach(a => dock.insertBefore(createAgentCard(a), sep))
+}
+
+function createAgentCard(agent) {
+  const card = document.createElement('div')
+  card.className = 'agent-card'
+  card.id = `card-${agent.id}`
+  card.innerHTML = `
+    <div class="char-wrap">
+      <video class="char-video" id="video-${agent.id}" loop playsinline muted autoplay
+        onerror="this.style.display='none';document.getElementById('emoji-${agent.id}').style.display='flex'">
+        <source src="/static/${agent.id}/idle.mp4" type="video/mp4">
+      </video>
+      <div class="char-emoji-fallback" id="emoji-${agent.id}">${agent.emoji||'🤖'}</div>
+      <div class="notify-badge" id="badge-${agent.id}">0</div>
+    </div>
+    <div class="agent-label">${agent.name}</div>`
+
+  // 버블은 body에 fixed
+  const bubble = document.createElement('div')
+  bubble.className = 'notify-bubble'
+  bubble.id = `bubble-${agent.id}`
+  bubble.innerHTML = `
+    <div class="bubble-msg" id="bubble-msg-${agent.id}"></div>
+    <div class="bubble-actions">
+      <button class="bubble-btn primary"   onclick="openChatFromBubble('${agent.id}')">대화하기</button>
+      <button class="bubble-btn secondary" onclick="dismissBubble('${agent.id}')">나중에</button>
+    </div>`
+  document.body.appendChild(bubble)
+
+  card.addEventListener('click', e => {
+    if (!e.target.closest('.bubble-btn')) openChat(agent.id)
+  })
+  return card
+}
+
+function startNotifyPoll() {
+  setInterval(async () => {
+    try {
+      const notes = await (await fetch('/api/notify')).json()
+      const counts = {}
+      notes.forEach(n => {
+        counts[n.agent_id] = (counts[n.agent_id]||0) + 1
+        if (!activeBubbles[n.agent_id]) showBubble(n.agent_id, n.message, n.id)
+      })
+      agents.forEach(a => {
+        const badge = document.getElementById(`badge-${a.id}`)
+        const card  = document.getElementById(`card-${a.id}`)
+        const cnt   = counts[a.id]||0
+        if (badge) { badge.textContent = cnt; badge.classList.toggle('show', cnt > 0) }
+        if (card)  card.classList.toggle('has-notify', cnt > 0)
+      })
+    } catch {}
+  }, 5000)
+}
+
+function showBubble(agentId, msg, notifyId) {
+  const bubble = document.getElementById(`bubble-${agentId}`)
+  const msgEl  = document.getElementById(`bubble-msg-${agentId}`)
+  if (!bubble || !msgEl) return
+  msgEl.textContent = msg
+  bubble.dataset.notifyId = notifyId
+  activeBubbles[agentId] = notifyId
+  bubble.classList.add('show')
+  setTimeout(() => dismissBubble(agentId), 8000)
+}
+function dismissBubble(agentId) {
+  document.getElementById(`bubble-${agentId}`)?.classList.remove('show')
+  const nid = activeBubbles[agentId]
+  if (nid) { fetch(`/api/notify/read/${nid}`,{method:'POST'}); delete activeBubbles[agentId] }
+}
+function openChatFromBubble(id) { dismissBubble(id); openChat(id) }
+
+async function greetOnStart() {
+  try {
+    const data = await (await fetch('/api/crawl/result')).json()
+    const msg  = data.total > 0
+      ? `유빈, 공고 ${data.total}개 있어. 확인해볼까?`
+      : `유빈, 안녕! 오늘도 같이 달려보자.`
+    showBubble('sully', msg, 'start-'+Date.now())
+  } catch {}
+}
+
+function openChat(agentId) {
+  currentAgent = agents.find(a => a.id === agentId)
+  if (!currentAgent) return
+  document.getElementById('chatEmoji').textContent = currentAgent.emoji || '🤖'
+  document.getElementById('chatName').textContent  = currentAgent.name
+  document.getElementById('chatRole').textContent  = currentAgent.role || ''
+  const msgEl = document.getElementById('chatMessages')
+  msgEl.innerHTML = ''
+  const hist = chatHistory[agentId] || []
+  hist.forEach(m => appendMsg(m.role, m.content, false))
+  if (!hist.length) {
+    const g = getGreeting(currentAgent)
+    appendMsg('agent', g, true)
+    chatHistory[agentId] = [{role:'agent', content:g}]
+  }
+  document.getElementById('chatPanel').classList.add('open')
+  document.getElementById('chatInput').focus()
+  if (window.electronAPI) window.electronAPI.chatOpen()
+}
+function closeChat() {
+  document.getElementById('chatPanel').classList.remove('open')
+  currentAgent = null
+  const anyOpen = document.getElementById('jobPanel').classList.contains('open') ||
+                  document.getElementById('mikePanel').classList.contains('open')
+  if (!anyOpen && window.electronAPI) window.electronAPI.chatClose()
+  else if (window.electronAPI) window.electronAPI.panelOpen()
+}
+function getGreeting(a) {
+  const h = new Date().getHours()
+  const t = h < 12 ? '좋은 아침이야' : h < 18 ? '안녕' : '수고했어'
+  return ({
+    sully: `${t}, 유빈! 오늘 공고 분석할까?`,
+    mike:  `${t}, 유빈! 스크럼 정리해줄게.`,
+    roz:   `${t}, 유빈. 수강생 업무 도와줄게.`,
+  })[a.id] || `${t}, 유빈! 뭐 도와줄까?`
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chatInput')
+  const text  = input.value.trim()
+  if (!text || !currentAgent) return
+  input.value = ''
+  document.getElementById('sendBtn').disabled = true
+  appendMsg('user', text, true)
+  if (!chatHistory[currentAgent.id]) chatHistory[currentAgent.id] = []
+  chatHistory[currentAgent.id].push({role:'user', content:text})
+  const tid = 't'+Date.now(); appendTyping(tid)
+  try {
+    const data = await (await fetch(`/api/chat/${currentAgent.id}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:text})
+    })).json()
+    removeTyping(tid)
+    const reply = data.reply || data.error || '오류 발생'
+    appendMsg('agent', reply, true)
+    chatHistory[currentAgent.id].push({role:'agent', content:reply})
+    const card = document.getElementById(`card-${currentAgent.id}`)
+    if (card) { card.classList.add('speaking'); setTimeout(()=>card.classList.remove('speaking'),2500) }
+  } catch(e) { removeTyping(tid); appendMsg('agent',`오류: ${e.message}`,true) }
+  document.getElementById('sendBtn').disabled = false
+  document.getElementById('chatInput').focus()
+}
+
+function appendMsg(role, content, scroll) {
+  const el = document.createElement('div')
+  el.className = `msg ${role}`
+  if (role === 'agent' && currentAgent)
+    el.innerHTML = `<div class="msg-sender">${currentAgent.name}</div>${escHtml(content)}`
+  else
+    el.textContent = content
+  document.getElementById('chatMessages').appendChild(el)
+  if (scroll) el.scrollIntoView({behavior:'smooth'})
+}
+function appendTyping(id) {
+  const el = document.createElement('div')
+  el.className = 'msg agent'; el.id = id
+  if (currentAgent)
+    el.innerHTML = `<div class="msg-sender">${currentAgent.name}</div>
+      <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`
+  document.getElementById('chatMessages').appendChild(el)
+  el.scrollIntoView({behavior:'smooth'})
+}
+function removeTyping(id) { document.getElementById(id)?.remove() }
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+}
+
+async function toggleJobPanel() {
+  const p = document.getElementById('jobPanel')
+  if (p.classList.contains('open')) {
+    p.classList.remove('open')
+    // 다른 패널 열려있으면 panelClose 안 보냄
+    const anyOpen = document.getElementById('mikePanel').classList.contains('open') ||
+                    document.getElementById('chatPanel').classList.contains('open')
+    if (!anyOpen && window.electronAPI) window.electronAPI.panelClose()
+    return
+  }
+  // 미리 데이터 로드 시작 (로딩 체감 줄이기)
+  const listEl = document.getElementById('jobList')
+  if (!listEl.dataset.loaded) loadJobs()
+  p.classList.add('open')
+  if (window.electronAPI) window.electronAPI.panelOpen()
+  loadJobs()
+}
+async function loadJobs() {
+  const list = document.getElementById('jobList')
+  list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-soft);font-size:13px;">불러오는 중...</div>`
+  try {
+    const data = await (await fetch('/api/crawl/result')).json()
+    if (!data.top?.length) {
+      list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-soft);font-size:13px;">
+        공고 없음<br><br>
+        <button onclick="runCrawl()" style="background:var(--text);color:var(--cream);border:none;
+          border-radius:10px;padding:8px 18px;font-family:'Gowun Dodum',sans-serif;
+          cursor:pointer;font-size:13px;">지금 크롤링</button></div>`
+      return
+    }
+    list.innerHTML = data.top.map(j => `
+      <div class="job-item" onclick="askAboutJob('${escAttr(j.title)}')">
+        <div class="job-item-title">${j.title}</div>
+        <div class="job-item-org">${j.org||''} ${j.end?'· ~'+j.end:''}</div>
+        <span class="job-score">${j.score}점</span>
+      </div>`).join('')
+    if (data.crawled_at)
+      list.innerHTML += `<div style="padding:8px;font-size:11px;color:var(--text-soft);text-align:center;opacity:.6;">
+        ${new Date(data.crawled_at).toLocaleString('ko-KR')} · 총 ${data.total}개</div>`
+  } catch(e) {
+    list.innerHTML = `<div style="padding:20px;color:#E05A3A;font-size:13px;">오류: ${e.message}</div>`
+  }
+}
+async function runCrawl() {
+  await fetch('/api/crawl/run', {method:'POST'})
+  setTimeout(loadJobs, 3000)
+}
+
+function toggleMikePanel() {
+  const p = document.getElementById('mikePanel')
+  if (p.classList.contains('open')) { closeMikePanel(); return }
+  p.classList.add('open')
+  if (window.electronAPI) window.electronAPI.panelOpen()
+  loadMikeBrief()
+  document.getElementById('jobPanel').classList.remove('open')
+}
+function closeMikePanel() {
+  document.getElementById('mikePanel').classList.remove('open')
+  const anyOpen = document.getElementById('jobPanel').classList.contains('open') ||
+                  document.getElementById('chatPanel').classList.contains('open')
+  if (!anyOpen && window.electronAPI) window.electronAPI.panelClose()
+}
+async function loadMikeBrief() {
+  const c = document.getElementById('mikeBriefContent')
+  document.getElementById('mikeDateLabel').textContent =
+    new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'})
+  try {
+    const d = await (await fetch('/api/notion/brief/mike')).json()
+    c.innerHTML = renderMikeBrief(d.brief || '')
+  } catch(e) {
+    c.innerHTML = `<div style="color:#E05A3A;font-size:13px;">오류: ${e.message}</div>`
+  }
+}
+
+function renderMikeBrief(brief) {
+  if (!brief || !brief.trim())
+    return `<div style="text-align:center;color:var(--text-soft);font-size:13px;padding:20px;">데이터 없음</div>`
+
+  const lines = brief.split('\n')
+  let html = '', sec = '', todosHtml = '', statsHtml = ''
+  let td = 0, tt = 0
+
+  lines.forEach(raw => {
+    const l = raw.trim()
+    if (!l) return
+
+    // 📅 헤더
+    if (l.startsWith('📅')) {
+      const title = l.replace('📅','').trim()
+      html += `<div style="font-family:'Gowun Dodum',sans-serif;font-size:12px;
+        color:var(--text-soft);margin-bottom:10px;">${title}</div>`
+      return
+    }
+
+    // 📋 또는 📌 — 오늘 할 일 섹션
+    if (l.startsWith('📋') || l.startsWith('📌')) {
+      sec = 'todo'
+      const m = l.match(/(\d+)\/(\d+)/)
+      if (m) { td = +m[1]; tt = +m[2] }
+      return
+    }
+
+    // 📊 — 누적 현황 섹션
+    if (l.startsWith('📊')) {
+      sec = 'stats'
+      return
+    }
+
+    // 투두 아이템
+    if (sec === 'todo' && (l.startsWith('⬜') || l.startsWith('✅') || l.startsWith('⬛'))) {
+      const done = l.startsWith('✅')
+      const text = l.replace(/^[⬜✅⬛]\s*/, '')
+      todosHtml += `<div class="mike-todo-item">
+        <span class="mike-check">${done ? '✅' : '☐'}</span>
+        <span class="mike-todo-text${done ? ' done' : ''}">${text}</span>
+      </div>`
+      return
+    }
+
+    // 누적 현황
+    if (sec === 'stats') {
+      if (l.startsWith('→')) {
+        statsHtml += `<div style="font-size:12px;color:var(--accent);
+          font-family:'Gowun Dodum',sans-serif;margin-top:6px;
+          padding:5px 8px;background:var(--accent-soft);border-radius:8px;">
+          ${l.replace('→','▸').trim()}</div>`
+      } else {
+        // 요일 바 (월요일 █░ 1/2)
+        const barMatch = l.match(/^(.+?)\s+([█░]+)\s+(\d+\/\d+)/)
+        if (barMatch) {
+          const [, day, bar, count] = barMatch
+          const filled = (bar.match(/█/g)||[]).length
+          const total  = bar.length
+          const pct    = total > 0 ? Math.round(filled/total*100) : 0
+          statsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;">
+            <span style="font-size:11px;color:var(--text-soft);width:32px;">${day}</span>
+            <div style="flex:1;height:4px;background:var(--cream2);border-radius:2px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:2px;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text-soft);white-space:nowrap;">${count}</span>
+          </div>`
+        } else {
+          statsHtml += `<div style="font-size:12px;color:var(--text-soft);padding:2px 0;">${l}</div>`
+        }
+      }
+    }
+  })
+
+  // 오늘 할 일
+  if (tt > 0 || todosHtml) {
+    const pct = tt > 0 ? Math.round(td/tt*100) : 0
+    html += `<div class="mike-section">
+      <div class="mike-section-title">오늘 할 일</div>
+      <div class="mike-progress">
+        <div class="mike-prog-bar">
+          <div class="mike-prog-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="mike-prog-label">${td}/${tt}</span>
+      </div>
+      ${todosHtml || '<div style="font-size:13px;color:var(--text-soft);">오늘 할 일 없음 🎉</div>'}
+    </div>`
+  }
+
+  // 누적 현황
+  if (statsHtml) {
+    html += `<div class="mike-section">
+      <div class="mike-section-title">이번 주 누적</div>
+      ${statsHtml}
+    </div>`
+  }
+
+  return html || `<div style="text-align:center;color:var(--text-soft);font-size:13px;padding:20px;">데이터 없음</div>`
+}
+
+function askAboutJob(title) {
+  document.getElementById('jobPanel').classList.remove('open')
+  if (window.electronAPI) window.electronAPI.panelClose()
+  openChat('sully')
+  setTimeout(() => { document.getElementById('chatInput').value=`"${title}" 공고 분석해줘`; sendMsg() }, 300)
+}
+function escAttr(s) { return s.replace(/"/g,'&quot;') }
+function setAgentVideo(id, state) {
+  const v = document.getElementById(`video-${id}`)
+  if (!v || v.dataset.state===state) return
+  v.dataset.state=state; v.src=`/static/${id}/${state}.mp4`
+  v.load(); v.play().catch(()=>{})
+}
+</script>
+</body>
+</html>

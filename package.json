@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@notionhq/client": "^5.12.0",
+    "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "electron": "^41.0.0"
+  },
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  }
+}

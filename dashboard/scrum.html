@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍌 데일리 스크럼</title>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:     #0D0D15;
+  --surf:   #181825;
+  --surf2:  #20202E;
+  --surf3:  #28283A;
+  --border: #2E2E45;
+  --text:   #F0EEF8;
+  --muted:  #5E5C78;
+  --banana: #FFE135;
+  --peel:   #C8960A;
+  --green:  #2ECC71;
+  --blue:   #3B82F6;
+  --purple: #9B59B6;
+  --red:    #E74C3C;
+  --orange: #F39C12;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nanum Gothic', sans-serif;
+  overflow: hidden;
+}
+
+/* ══ LAYOUT ══════════════════════════════════ */
+.app {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(255,225,53,.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(59,130,246,.04) 0%, transparent 50%);
+}
+
+.card {
+  width: 520px;
+  max-height: 92vh;
+  background: var(--surf);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ══ PROGRESS BAR ════════════════════════════ */
+.step-bar {
+  display: flex;
+  gap: 4px;
+  padding: 16px 20px 0;
+  flex-shrink: 0;
+}
+.step-dot {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background .4s;
+}
+.step-dot.done    { background: var(--green); }
+.step-dot.active  { background: var(--banana); }
+
+/* ══ CHARACTER ═══════════════════════════════ */
+.char-zone {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px 22px 14px;
+  flex-shrink: 0;
+}
+.avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #FFF176, var(--banana) 60%, var(--peel));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; flex-shrink: 0;
+  box-shadow: 0 0 24px rgba(255,225,53,.2), 0 6px 20px rgba(0,0,0,.4);
+  animation: float 3.5s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-6px) rotate(2deg); }
+}
+.avatar.talking { animation: talk .25s ease-in-out infinite alternate; }
+@keyframes talk {
+  from { transform: scaleY(1) rotate(-2deg); }
+  to   { transform: scaleY(1.05) rotate(-2deg); }
+}
+
+.bubble {
+  flex: 1;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 4px 16px 16px 16px;
+  padding: 12px 15px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  min-height: 56px;
+  position: relative;
+}
+.bubble::before {
+  content: '';
+  position: absolute;
+  left: -7px; top: 14px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 7px solid var(--border);
+}
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: -5px; top: 15px;
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 6px solid var(--surf2);
+}
+.cursor {
+  display: inline-block;
+  width: 2px; height: 13px;
+  background: var(--banana);
+  vertical-align: middle;
+  margin-left: 1px;
+  animation: blink .65s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ══ STEP CONTENT ════════════════════════════ */
+.step-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 22px 4px;
+}
+.step-content::-webkit-scrollbar { width: 4px; }
+.step-content::-webkit-scrollbar-track { background: transparent; }
+.step-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* 섹션 제목 */
+.section-title {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 10px; margin-top: 6px;
+}
+.section-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 체크 아이템 (어제 한 일) */
+.check-item {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 8px 10px; border-radius: 9px;
+  cursor: pointer; transition: background .15s;
+  margin-bottom: 4px;
+}
+.check-item:hover { background: var(--surf2); }
+.check-item.done  { opacity: .5; }
+.chk {
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; transition: all .15s; margin-top: 1px;
+}
+.check-item.done .chk { background: var(--green); border-color: var(--green); color: #fff; }
+.chk-text { font-size: 13px; line-height: 1.5; }
+.check-item.done .chk-text { text-decoration: line-through; color: var(--muted); }
+
+/* 인풋 */
+.add-row {
+  display: flex; gap: 7px; margin-top: 10px; margin-bottom: 6px;
+}
+.item-input {
+  flex: 1; background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 9px 13px; color: var(--text);
+  font-family: 'Nanum Gothic', sans-serif; font-size: 13px; outline: none;
+  transition: border-color .2s;
+}
+.item-input:focus { border-color: var(--banana); }
+.add-btn {
+  background: var(--banana); border: none; border-radius: 9px;
+  width: 38px; font-size: 18px; cursor: pointer; color: #1A1200;
+  transition: opacity .15s; flex-shrink: 0;
+}
+.add-btn:hover { opacity: .85; }
+
+/* 태그 */
+.tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.item-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 11px; font-size: 12px;
+  animation: pop-in .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pop-in { from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
+.tag-del { cursor: pointer; color: var(--muted); line-height: 1; font-size: 14px; }
+.tag-del:hover { color: var(--red); }
+
+/* 스코어 */
+.score-block {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 18px; margin-bottom: 10px;
+}
+.score-num {
+  font-family: 'Do Hyeon', sans-serif; font-size: 52px; line-height: 1;
+}
+.grade-ring {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 3px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Do Hyeon', sans-serif; font-size: 20px;
+}
+.gS{color:#F39C12} .gA{color:#2ECC71} .gB{color:#3B82F6} .gC{color:#9B59B6} .gD{color:#E74C3C}
+.score-meta { flex: 1; }
+.score-company { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.score-verdict { font-size: 12px; color: var(--text); line-height: 1.5; }
+
+/* 진행률 */
+.prog-item { margin-bottom: 9px; }
+.prog-label {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted); margin-bottom: 4px;
+}
+.prog-bar { height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.prog-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--banana), var(--peel));
+  transition: width 1.2s cubic-bezier(.34,1.56,.64,1); width: 0%;
+}
+.prog-fill.blue   { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.prog-fill.purple { background: linear-gradient(90deg, #9B59B6, #C39BD3); }
+.prog-fill.green  { background: linear-gradient(90deg, #2ECC71, #58D68D); }
+
+/* 목표 카드 */
+.goal-section {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+}
+.goal-header {
+  font-family: 'Do Hyeon', sans-serif; font-size: 13px;
+  color: var(--muted); margin-bottom: 9px;
+  display: flex; align-items: center; gap: 7px;
+}
+.goal-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; color: var(--text); padding: 4px 0;
+  line-height: 1.5;
+}
+.goal-bullet {
+  width: 5px; height: 5px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 5px;
+}
+
+/* 무드 선택 */
+.mood-row {
+  display: flex; gap: 8px; justify-content: center;
+  margin: 8px 0 12px;
+}
+.mood-btn {
+  font-size: 24px; background: var(--surf2); border: 2px solid transparent;
+  border-radius: 12px; padding: 8px 12px; cursor: pointer;
+  transition: all .15s;
+}
+.mood-btn:hover { border-color: var(--border); transform: scale(1.1); }
+.mood-btn.selected { border-color: var(--banana); background: rgba(255,225,53,.1); }
+
+/* 완료 화면 */
+.done-zone {
+  text-align: center; padding: 16px 0 8px;
+}
+.done-emoji {
+  font-size: 60px;
+  animation: bounce .6s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes bounce { from{transform:scale(0)} to{transform:scale(1)} }
+.done-title {
+  font-family: 'Do Hyeon', sans-serif;
+  font-size: 22px; color: var(--banana);
+  margin-top: 10px;
+}
+.done-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+/* ══ BOTTOM BAR ══════════════════════════════ */
+.bottom-bar {
+  display: flex; gap: 9px; padding: 14px 22px 18px;
+  flex-shrink: 0; border-top: 1px solid var(--border);
+}
+.btn-skip {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 11px; padding: 11px 18px;
+  font-family: 'Do Hyeon', sans-serif; font-size: 13px;
+  color: var(--muted); cursor: pointer; transition: all .15s;
+}
+.btn-skip:hover { border-color: var(--muted); color: var(--text); }
+.btn-next {
+  flex: 1; background: var(--banana); border: none; border-radius: 11px;
+  padding: 12px; font-family: 'Do Hyeon', sans-serif; font-size: 15px;
+  color: #1A1200; cursor: pointer;
+  box-shadow: 0 3px 16px rgba(255,225,53,.25);
+  transition: all .15s;
+}
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 5px 22px rgba(255,225,53,.35); }
+.btn-next:disabled { opacity: .4; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="card">
+
+  <!-- 스텝 진행 바 -->
+  <div class="step-bar" id="stepBar"></div>
+
+  <!-- 캐릭터 + 말풍선 -->
+  <div class="char-zone">
+    <div class="avatar" id="avatar">🍌</div>
+    <div class="bubble" id="bubble">
+      <span id="bubbleText"></span><span class="cursor" id="cursor" style="display:none;"></span>
+    </div>
+  </div>
+
+  <!-- 단계별 콘텐츠 -->
+  <div class="step-content" id="stepContent"></div>
+
+  <!-- 하단 버튼 -->
+  <div class="bottom-bar">
+    <button class="btn-skip" id="skipBtn" onclick="skipStep()">건너뛰기</button>
+    <button class="btn-next" id="nextBtn" onclick="nextStep()">시작하기 →</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ══ 전역 상태 ═════════════════════════════════════════════
+const TOTAL_STEPS = 6
+let step          = 0
+let flaskState    = null
+let goals         = { monthly: [], weekly: [], daily_template: [] }
+let yesterdayList = []   // [{text, done}]
+let todayList     = []   // [string]
+let selectedMood  = '😊'
+
+// ══ 초기화 ════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  buildStepBar()
+  await loadAll()
+  runStep(0)
+})
+
+async function loadAll() {
+  try {
+    const [stateRes, goalsRes, histRes] = await Promise.all([
+      fetch('/api/state'),
+      fetch('/api/goals'),
+      fetch('/api/history'),
+    ])
+    flaskState = await stateRes.json()
+    goals      = await goalsRes.json()
+
+    // 어제 투두 → 어제한일 초기값
+    if (flaskState?.todos?.length) {
+      yesterdayList = flaskState.todos.slice(0, 6).map(t => ({ text: t.text, done: t.done }))
+    }
+  } catch (e) {
+    console.warn('데이터 로드 실패:', e)
+  }
+}
+
+// ══ 진행 바 ════════════════════════════════════════════════
+function buildStepBar() {
+  const bar = document.getElementById('stepBar')
+  bar.innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) =>
+    `<div class="step-dot" id="dot-${i}"></div>`
+  ).join('')
+}
+function updateStepBar() {
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const el = document.getElementById('dot-' + i)
+    el.className = 'step-dot' +
+      (i < step ? ' done' : i === step ? ' active' : '')
+  }
+}
+
+// ══ 타이핑 애니메이션 ════════════════════════════════════
+function typeText(text, speed = 25) {
+  return new Promise(resolve => {
+    const el     = document.getElementById('bubbleText')
+    const cursor = document.getElementById('cursor')
+    const av     = document.getElementById('avatar')
+    el.textContent = ''
+    cursor.style.display = 'inline-block'
+    av.classList.add('talking')
+
+    let i = 0
+    const t = setInterval(() => {
+      el.textContent += text[i++]
+      if (i >= text.length) {
+        clearInterval(t)
+        cursor.style.display = 'none'
+        av.classList.remove('talking')
+        resolve()
+      }
+    }, speed)
+  })
+}
+
+// ══ 단계 플로우 ════════════════════════════════════════════
+const STEPS = [
+  step0_intro,
+  step1_yesterday,
+  step2_today,
+  step3_goals,
+  step4_score,
+  step5_done,
+]
+
+async function runStep(n) {
+  step = n
+  updateStepBar()
+  document.getElementById('stepContent').innerHTML = ''
+  document.getElementById('nextBtn').disabled = false
+  await STEPS[n]()
+}
+
+async function nextStep() {
+  if (step < TOTAL_STEPS - 1) runStep(step + 1)
+  else completedScrum()
+}
+
+function skipStep() {
+  if (step < TOTAL_STEPS - 1) runStep(step + 1)
+  else window.location.href = '/'
+}
+
+// ── 0: 인트로 ─────────────────────────────────────────────
+async function step0_intro() {
+  const now  = new Date()
+  const hour = now.getHours()
+  const greeting = hour < 12 ? '좋은 아침이야' : hour < 18 ? '안녕' : '수고했어'
+
+  document.getElementById('nextBtn').textContent = '스크럼 시작 →'
+  document.getElementById('skipBtn').style.display = 'none'
+
+  await typeText(`${greeting} 유빈! 🍌 ${now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'})} 데일리 스크럼 시작할게. 오늘도 같이 해보자!`)
+}
+
+// ── 1: 어제 한 일 체크 ────────────────────────────────────
+async function step1_yesterday() {
+  document.getElementById('nextBtn').textContent = '다음 →'
+  document.getElementById('skipBtn').style.display = ''
+
+  await typeText('어제 뭘 했어? 완료한 것들 체크해줘 🍌')
+
+  const content = document.getElementById('stepContent')
+  content.innerHTML = `
+    <div class="section-title">
+      <span class="section-dot" style="background:#2ECC71;"></span>어제 한 일 체크
+    </div>
+    <div id="yesterdayList"></div>
+    <div class="add-row">
+      <input class="item-input" id="yInput" placeholder="추가로 한 일 입력..." onkeydown="if(event.key==='Enter')addYesterday()">
+      <button class="add-btn" onclick="addYesterday()">+</button>
+    </div>
+  `
+  renderYesterdayList()
+}
+
+function renderYesterdayList() {
+  const el = document.getElementById('yesterdayList')
+  if (!el) return
+  el.innerHTML = yesterdayList.length
+    ? yesterdayList.map((t, i) => `
+        <div class="check-item ${t.done ? 'done' : ''}" onclick="toggleYest(${i})">
+          <div class="chk">${t.done ? '✓' : ''}</div>
+          <div class="chk-text">${t.text}</div>
+        </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:8px 10px;">아직 기록 없음 — 직접 추가해봐!</div>'
+}
+
+function toggleYest(i) {
+  yesterdayList[i].done = !yesterdayList[i].done
+  renderYesterdayList()
+}
+
+function addYesterday() {
+  const input = document.getElementById('yInput')
+  const val   = input?.value?.trim()
+  if (!val) return
+  yesterdayList.push({ text: val, done: true })
+  input.value = ''
+  renderYesterdayList()
+}
+
+// ── 2: 오늘 할 일 설정 ────────────────────────────────────
+async function step2_today() {
+  document.getElementById('nextBtn').textContent = '다음 →'
+
+  await typeText('오늘 할 일을 정해보자! 목표랑 연결해서 생각해봐 🍌')
+
+  // 무드 + 오늘 투두
+  const content = document.getElementById('stepContent')
+  content.innerHTML = `
+    <div class="section-title">
+      <span class="section-dot" style="background:#FFE135;"></span>오늘의 컨디션
+    </div>
+    <div class="mood-row" id="moodRow">
+      ${['😊','😤','😴','🔥','😰','💪'].map(m =>
+        `<button class="mood-btn ${m===selectedMood?'selected':''}" onclick="selectMood('${m}')">${m}</button>`
+      ).join('')}
+    </div>
+    <div class="section-title" style="margin-top:10px;">
+      <span class="section-dot" style="background:#3B82F6;"></span>오늘 할 일
+    </div>
+    <div class="tag-wrap" id="todayTags"></div>
+    <div class="add-row">
+      <input class="item-input" id="tInput" placeholder="오늘 할 일 입력 (Enter)..." onkeydown="if(event.key==='Enter')addToday()">
+      <button class="add-btn" onclick="addToday()">+</button>
+    </div>
+  `
+  renderTodayTags()
+  setTimeout(() => document.getElementById('tInput')?.focus(), 300)
+}
+
+function selectMood(m) {
+  selectedMood = m
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.toggle('selected', b.textContent === m)
+  })
+}
+
+function addToday() {
+  const input = document.getElementById('tInput')
+  const val   = input?.value?.trim()
+  if (!val) return
+  todayList.push(val)
+  input.value = ''
+  renderTodayTags()
+}
+
+function removeToday(i) {
+  todayList.splice(i, 1)
+  renderTodayTags()
+}
+
+function renderTodayTags() {
+  const el = document.getElementById('todayTags')
+  if (!el) return
+  el.innerHTML = todayList.map((t, i) => `
+    <span class="item-tag">
+      ${t}
+      <span class="tag-del" onclick="removeToday(${i})">×</span>
+    </span>`).join('')
+}
+
+// ── 3: 월간/주간 목표 정렬 ───────────────────────────────
+async function step3_goals() {
+  document.getElementById('nextBtn').textContent = '다음 →'
+
+  await typeText('월간·주간 목표 확인해봐! 오늘 할 일이 목표랑 연결되어 있는지 점검하자 🍌')
+
+  const content = document.getElementById('stepContent')
+  const monthly = goals.monthly || []
+  const weekly  = goals.weekly  || []
+
+  const renderGoals = (items, color) => items.length
+    ? items.map(g => `
+        <div class="goal-item">
+          <span class="goal-bullet" style="background:${color};"></span>
+          <span>${g}</span>
+        </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:4px 0;">아직 목표 없음</div>'
+
+  content.innerHTML = `
+    <div class="goal-section">
+      <div class="goal-header"><span style="font-size:16px;">📅</span> 이번 달 목표</div>
+      <div id="monthlyGoals">${renderGoals(monthly, '#F39C12')}</div>
+      <div class="add-row" style="margin-top:8px;">
+        <input class="item-input" id="mInput" placeholder="월간 목표 추가..." onkeydown="if(event.key==='Enter')addGoal('monthly')">
+        <button class="add-btn" onclick="addGoal('monthly')">+</button>
+      </div>
+    </div>
+    <div class="goal-section">
+      <div class="goal-header"><span style="font-size:16px;">📆</span> 이번 주 목표</div>
+      <div id="weeklyGoals">${renderGoals(weekly, '#3B82F6')}</div>
+      <div class="add-row" style="margin-top:8px;">
+        <input class="item-input" id="wInput" placeholder="주간 목표 추가..." onkeydown="if(event.key==='Enter')addGoal('weekly')">
+        <button class="add-btn" onclick="addGoal('weekly')">+</button>
+      </div>
+    </div>
+  `
+}
+
+function addGoal(type) {
+  const inputId = type === 'monthly' ? 'mInput' : 'wInput'
+  const listId  = type === 'monthly' ? 'monthlyGoals' : 'weeklyGoals'
+  const color   = type === 'monthly' ? '#F39C12' : '#3B82F6'
+  const input   = document.getElementById(inputId)
+  const val     = input?.value?.trim()
+  if (!val) return
+
+  goals[type] = goals[type] || []
+  goals[type].push(val)
+  input.value = ''
+
+  // 목표 저장 (비동기)
+  fetch('/api/goals', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(goals),
+  })
+
+  // 렌더 업데이트
+  const el = document.getElementById(listId)
+  if (el) el.innerHTML = goals[type].map(g => `
+    <div class="goal-item">
+      <span class="goal-bullet" style="background:${color};"></span>
+      <span>${g}</span>
+    </div>`).join('')
+}
+
+// ── 4: 공고 스코어 브리핑 ────────────────────────────────
+async function step4_score() {
+  document.getElementById('nextBtn').textContent = '완료 →'
+
+  const hasScore = flaskState?.score !== null && flaskState?.score !== undefined
+  const s   = flaskState?.score ?? 0
+  const g   = flaskState?.grade ?? '?'
+  const sign = s >= 0 ? '+' : ''
+
+  if (hasScore) {
+    await typeText(`${sign}${s}점이야! ${flaskState.verdict || ''} 지금 준비도 확인해봐 🍌`)
+  } else {
+    await typeText('아직 공고 분석을 안 했어! 오늘 분석해보자 🍌')
+  }
+
+  const progs = flaskState?.spec_progress || [
+    { label: '가점 항목 충족', pct: 0 },
+    { label: '감점 항목 해소', pct: 0 },
+    { label: '전체 준비도',    pct: 0 },
+  ]
+  const avg = progs.length
+    ? Math.round(progs.reduce((a, p) => a + p.pct, 0) / progs.length)
+    : 0
+  const progColors = ['', ' blue', ' purple']
+
+  const content = document.getElementById('stepContent')
+  content.innerHTML = `
+    ${hasScore ? `
+    <div class="score-block">
+      <div class="score-num g${g}">${sign}${s}</div>
+      <div>
+        <div class="grade-ring g${g}">${g}</div>
+      </div>
+      <div class="score-meta">
+        <div class="score-company">${flaskState?.company || ''}</div>
+        <div class="score-verdict">${flaskState?.verdict || ''}</div>
+      </div>
+    </div>` : `
+    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:14px;
+      padding:16px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px;">
+      공고 분석 전 — 대시보드에서 분석해봐!
+    </div>`}
+    <div class="section-title">
+      <span class="section-dot" style="background:#F39C12;"></span>스펙 보완 진행률
+    </div>
+    ${progs.map((p, i) => `
+      <div class="prog-item">
+        <div class="prog-label"><span>${p.label}</span><span id="pct${i}">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill${progColors[i] || ''}" id="fill${i}"></div></div>
+      </div>`).join('')}
+    <div style="margin-top:10px;padding:10px 14px;background:var(--surf2);
+      border:1px solid var(--border);border-radius:10px;
+      display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">📊</span>
+      <div>
+        <div style="font-size:11px;color:var(--muted);">전체 준비도 평균</div>
+        <div style="font-family:'Do Hyeon',sans-serif;font-size:22px;color:var(--banana);">${avg}%</div>
+      </div>
+    </div>
+  `
+
+  // 진행률 애니메이션
+  setTimeout(() => {
+    progs.forEach((p, i) => {
+      const fill = document.getElementById('fill' + i)
+      const pct  = document.getElementById('pct' + i)
+      if (fill) fill.style.width = p.pct + '%'
+      if (pct)  pct.textContent  = p.pct + '%'
+    })
+  }, 200)
+}
+
+// ── 5: 완료 ──────────────────────────────────────────────
+async function step5_done() {
+  document.getElementById('nextBtn').textContent  = '대시보드 열기 →'
+  document.getElementById('skipBtn').style.display = 'none'
+
+  await typeText('스크럼 완료! 오늘도 잘 할 수 있어 유빈아~ 파이팅! 🍌')
+
+  const doneRate = yesterdayList.length
+    ? Math.round(yesterdayList.filter(t => t.done).length / yesterdayList.length * 100)
+    : 0
+
+  document.getElementById('stepContent').innerHTML = `
+    <div class="done-zone">
+      <div class="done-emoji">${selectedMood}</div>
+      <div class="done-title">스크럼 완료!</div>
+      <div class="done-sub">어제 완료율 ${doneRate}% · 오늘 목표 ${todayList.length}개</div>
+    </div>
+  `
+
+  // 서버에 스크럼 기록 저장
+  const progs    = flaskState?.spec_progress || []
+  const spec_avg = progs.length
+    ? Math.round(progs.reduce((a, p) => a + p.pct, 0) / progs.length)
+    : 0
+
+  fetch('/api/scrum/complete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      yesterday: yesterdayList,
+      today:     todayList,
+      spec_avg,
+      mood:      selectedMood,
+    }),
+  })
+}
+
+function completedScrum() {
+  window.location.href = '/'
+}
+</script>
+</body>
+</html>
