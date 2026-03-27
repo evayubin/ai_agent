@@ -698,12 +698,21 @@ function appendMsg(role, content, scroll) {
   const el = document.createElement('div')
   el.className = `msg ${role}`
   if (role === 'agent' && currentAgent)
-    el.innerHTML = `<div class="msg-sender">${currentAgent.name}</div>${escHtml(content)}`
+    el.innerHTML = `<div class="msg-sender">${currentAgent.name}</div>${mdToHtml(escHtml(content))}`
   else
     el.textContent = content
   document.getElementById('chatMessages').appendChild(el)
   if (scroll) el.scrollIntoView({behavior:'smooth'})
 }
+function mdToHtml(s) {
+  return s
+    .replace(/###\s(.+)/g, '<strong style="font-size:13px;color:var(--text);">$1</strong>')
+    .replace(/##\s(.+)/g,  '<strong style="font-size:14px;color:var(--text);">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^-\s(.+)/gm, '• $1')
+    .replace(/^\d+\.\s(.+)/gm, '<span style="color:var(--accent);font-weight:700;">$&</span>')
+}
+
 function appendTyping(id) {
   const el = document.createElement('div')
   el.className = 'msg agent'; el.id = id
@@ -797,7 +806,7 @@ function renderMikeBrief(brief) {
     return `<div style="text-align:center;color:var(--text-soft);font-size:13px;padding:20px;">데이터 없음</div>`
 
   const lines = brief.split('\n')
-  let html = '', sec = '', todosHtml = '', statsHtml = ''
+  let html = '', sec = '', todosHtml = '', statsHtml = '', goalsHtml = ''
   let td = 0, tt = 0
 
   lines.forEach(raw => {
@@ -806,14 +815,13 @@ function renderMikeBrief(brief) {
 
     // 📅 헤더
     if (l.startsWith('📅')) {
-      const title = l.replace('📅','').trim()
       html += `<div style="font-family:'Gowun Dodum',sans-serif;font-size:12px;
-        color:var(--text-soft);margin-bottom:10px;">${title}</div>`
+        color:var(--text-soft);margin-bottom:10px;">${l.replace('📅','').trim()}</div>`
       return
     }
 
-    // 📋 또는 📌 — 오늘 할 일 섹션
-    if (l.startsWith('📋') || l.startsWith('📌')) {
+    // 📌 — 오늘 할 일 섹션
+    if (l.startsWith('📌')) {
       sec = 'todo'
       const m = l.match(/(\d+)\/(\d+)/)
       if (m) { td = +m[1]; tt = +m[2] }
@@ -821,19 +829,43 @@ function renderMikeBrief(brief) {
     }
 
     // 📊 — 누적 현황 섹션
-    if (l.startsWith('📊')) {
-      sec = 'stats'
+    if (l.startsWith('📊')) { sec = 'stats'; return }
+
+    // 📋 — 단기 목표 섹션
+    if (l.startsWith('📋')) { sec = 'goals'; return }
+
+    // 🎯 — 단기 목표 타이틀
+    if (l.startsWith('🎯') && sec === 'goals') {
+      goalsHtml += `<div style="font-family:'Gowun Dodum',sans-serif;font-size:11px;
+        color:var(--text-soft);margin-bottom:6px;">${l.replace('🎯','').trim()}</div>`
       return
     }
 
-    // 투두 아이템
-    if (sec === 'todo' && (l.startsWith('⬜') || l.startsWith('✅') || l.startsWith('⬛'))) {
+    // 투두 아이템 (오늘 할 일)
+    if (sec === 'todo' && (l.startsWith('⬜') || l.startsWith('✅'))) {
       const done = l.startsWith('✅')
-      const text = l.replace(/^[⬜✅⬛]\s*/, '')
+      const text = l.replace(/^[⬜✅]\s*/, '')
       todosHtml += `<div class="mike-todo-item">
         <span class="mike-check">${done ? '✅' : '☐'}</span>
         <span class="mike-todo-text${done ? ' done' : ''}">${text}</span>
       </div>`
+      return
+    }
+
+    // 단기 목표 아이템
+    if (sec === 'goals') {
+      if (l.startsWith('⬜') || l.startsWith('✅')) {
+        const done = l.startsWith('✅')
+        const text = l.replace(/^[⬜✅]\s*/, '')
+        goalsHtml += `<div class="mike-todo-item">
+          <span class="mike-check">${done ? '✅' : '☐'}</span>
+          <span class="mike-todo-text${done ? ' done' : ''}">${text}</span>
+        </div>`
+      } else if (l.startsWith('📌')) {
+        const text = l.replace('📌','').trim()
+        goalsHtml += `<div style="font-size:11px;font-weight:700;color:var(--text-soft);
+          margin:8px 0 4px;font-family:'Gowun Dodum',sans-serif;">${text}</div>`
+      }
       return
     }
 
@@ -845,13 +877,11 @@ function renderMikeBrief(brief) {
           padding:5px 8px;background:var(--accent-soft);border-radius:8px;">
           ${l.replace('→','▸').trim()}</div>`
       } else {
-        // 요일 바 (월요일 █░ 1/2)
-        const barMatch = l.match(/^(.+?)\s+([█░]+)\s+(\d+\/\d+)/)
+        const barMatch = l.match(/^(.+?)\s+([\u2588\u2591]+)\s+(\d+\/\d+)/)
         if (barMatch) {
           const [, day, bar, count] = barMatch
-          const filled = (bar.match(/█/g)||[]).length
-          const total  = bar.length
-          const pct    = total > 0 ? Math.round(filled/total*100) : 0
+          const filled = (bar.match(/\u2588/g)||[]).length
+          const pct = Math.round(filled/bar.length*100)
           statsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;">
             <span style="font-size:11px;color:var(--text-soft);width:32px;">${day}</span>
             <div style="flex:1;height:4px;background:var(--cream2);border-radius:2px;overflow:hidden;">
@@ -859,8 +889,6 @@ function renderMikeBrief(brief) {
             </div>
             <span style="font-size:11px;color:var(--text-soft);white-space:nowrap;">${count}</span>
           </div>`
-        } else {
-          statsHtml += `<div style="font-size:12px;color:var(--text-soft);padding:2px 0;">${l}</div>`
         }
       }
     }
@@ -872,9 +900,7 @@ function renderMikeBrief(brief) {
     html += `<div class="mike-section">
       <div class="mike-section-title">오늘 할 일</div>
       <div class="mike-progress">
-        <div class="mike-prog-bar">
-          <div class="mike-prog-fill" style="width:${pct}%"></div>
-        </div>
+        <div class="mike-prog-bar"><div class="mike-prog-fill" style="width:${pct}%"></div></div>
         <span class="mike-prog-label">${td}/${tt}</span>
       </div>
       ${todosHtml || '<div style="font-size:13px;color:var(--text-soft);">오늘 할 일 없음 🎉</div>'}
@@ -886,6 +912,14 @@ function renderMikeBrief(brief) {
     html += `<div class="mike-section">
       <div class="mike-section-title">이번 주 누적</div>
       ${statsHtml}
+    </div>`
+  }
+
+  // 단기 목표
+  if (goalsHtml) {
+    html += `<div class="mike-section">
+      <div class="mike-section-title">단기 목표</div>
+      ${goalsHtml}
     </div>`
   }
 

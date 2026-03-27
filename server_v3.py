@@ -27,7 +27,7 @@ try:
     from notion_sync import (
     get_agent_brief, check_notion_connection,
     sully_summary, sully_get_jobs,
-    mike_daily_brief, mike_kpt_draft, mike_weekly_plan_draft,
+    mike_daily_brief, mike_weekly_plan_draft,
     roz_daily_brief, roz_feedback_draft, roz_get_students,
     roz_get_recent_lesson, roz_get_lesson_summary, roz_generate_material_draft,
 )   

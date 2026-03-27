@@ -1,5 +1,287 @@
 [
   {
+    "date": "2026-03-26",
+    "company": "KOICA(한국국제협력단)",
+    "score": 0,
+    "grade": "C",
+    "verdict": "⚡ 도전 가능 — 부족한 부분을 명확히 파악 후 지원.",
+    "bonuses": [],
+    "penalties": [
+      {
+        "label": "어학 컷오프 (토익 800 이상 고정)",
+        "score": 0,
+        "msg": "✅ OPIc IH → 토익 820 환산, 어학 기준 충족으로 감점 면제"
+      }
+    ],
+    "todos": [
+      {
+        "text": "응시 자격 요건 및 결격 사유 1차 검토",
+        "done": false
+      },
+      {
+        "text": "NCS 직무기술서 분석 및 자격증 대조",
+        "done": false
+      },
+      {
+        "text": "응시 자격·결격 사유 검토",
+        "done": false
+      }
+    ],
+    "todo_rate": 0,
+    "spec_progress": [
+      {
+        "label": "가점 항목 충족",
+        "pct": 0
+      },
+      {
+        "label": "감점 항목 해소",
+        "pct": 100
+      },
+      {
+        "label": "전체 준비도",
+        "pct": 0
+      }
+    ],
+    "gang_pro_log": [
+      "[09:49:40] ✅ 완료"
+    ]
+  },
+  {
+    "date": "2026-03-24",
+    "company": "한국가스안전공사",
+    "score": 0,
+    "grade": "C",
+    "verdict": "⚡ 도전 가능 — 부족한 부분을 명확히 파악 후 지원.",
+    "bonuses": [],
+    "penalties": [
+      {
+        "label": "어학 컷오프 (토익 800 이상 고정)",
+        "score": 0,
+        "msg": "✅ OPIc IH → 토익 820 환산, 어학 기준 충족으로 감점 면제"
+      }
+    ],
+    "todos": [
+      {
+        "text": "응시 자격 요건 및 결격 사유 1차 검토",
+        "done": false
+      },
+      {
+        "text": "응시 자격·결격 사유 검토",
+        "done": false
+      },
+      {
+        "text": "감점 항목 보완 계획",
+        "done": false
+      }
+    ],
+    "todo_rate": 0,
+    "spec_progress": [
+      {
+        "label": "가점 항목 충족",
+        "pct": 0
+      },
+      {
+        "label": "감점 항목 해소",
+        "pct": 100
+      },
+      {
+        "label": "전체 준비도",
+        "pct": 0
+      }
+    ],
+    "gang_pro_log": [
+      "[13:06:28] ✅ 완료"
+    ]
+  },
+  {
+    "date": "2026-03-23",
+    "company": "KOICA(한국국제협력단)",
+    "score": 0,
+    "grade": "C",
+    "verdict": "⚡ 도전 가능 — 부족한 부분을 명확히 파악 후 지원.",
+    "bonuses": [],
+    "penalties": [
+      {
+        "label": "어학 컷오프 (토익 800 이상 고정)",
+        "score": 0,
+        "msg": "✅ OPIc IH → 토익 820 환산, 어학 기준 충족으로 감점 면제"
+      }
+    ],
+    "todos": [
+      {
+        "text": "응시 자격 요건 및 결격 사유 1차 검토",
+        "done": false
+      },
+      {
+        "text": "NCS 직무기술서 분석: KOICA 직무에 필요한 역량 및 기술 파악",
+        "done": false
+      },
+      {
+        "text": "응시 자격·결격 사유 검토",
+        "done": false
+      }
+    ],
+    "todo_rate": 0,
+    "spec_progress": [
+      {
+        "label": "가점 항목 충족",
+        "pct": 0
+      },
+      {
+        "label": "감점 항목 해소",
+        "pct": 100
+      },
+      {
+        "label": "전체 준비도",
+        "pct": 0
+      }
+    ],
+    "gang_pro_log": [
+      "[09:37:19] ✅ 완료"
+    ]
+  },
+  {
+    "date": "2026-03-22",
+    "company": "KOICA(한국국제협력단)",
+    "score": 0,
+    "grade": "C",
+    "verdict": "⚡ 도전 가능 — 부족한 부분을 명확히 파악 후 지원.",
+    "bonuses": [],
+    "penalties": [
+      {
+        "label": "어학 컷오프 (토익 800 이상 고정)",
+        "score": 0,
+        "msg": "✅ OPIc IH → 토익 820 환산, 어학 기준 충족으로 감점 면제"
+      }
+    ],
+    "todos": [
+      {
+        "text": "응시 자격 요건 및 결격 사유 1차 검토",
+        "done": false
+      },
+      {
+        "text": "추가 자격 요건 및 결격 사유 검토",
+        "done": false
+      },
+      {
+        "text": "관련 자격증 취득 및 온라인 강좌 수강 계획",
+        "done": false
+      }
+    ],
+    "todo_rate": 0,
+    "spec_progress": [
+      {
+        "label": "가점 항목 충족",
+        "pct": 0
+      },
+      {
+        "label": "감점 항목 해소",
+        "pct": 100
+      },
+      {
+        "label": "전체 준비도",
+        "pct": 0
+      }
+    ],
+    "gang_pro_log": [
+      "[18:32:09] ✅ 완료"
+    ]
+  },
+  {
+    "date": "2026-03-21",
+    "company": "NIPA",
+    "score": 0,
+    "grade": "C",
+    "verdict": "⚡ 도전 가능 — 부족한 부분을 명확히 파악 후 지원.",
+    "bonuses": [],
+    "penalties": [
+      {
+        "label": "어학 컷오프 (토익 800 이상 고정)",
+        "score": 0,
+        "msg": "✅ OPIc IH → 토익 820 환산, 어학 기준 충족으로 감점 면제"
+      }
+    ],
+    "todos": [
+      {
+        "text": "응시 자격 요건 및 결격 사유 1차 검토",
+        "done": false
+      },
+      {
+        "text": "NCS 직무기술서 분석 및 직무 역량 매칭",
+        "done": false
+      },
+      {
+        "text": "응시 자격·결격 사유 검토",
+        "done": false
+      }
+    ],
+    "todo_rate": 0,
+    "spec_progress": [
+      {
+        "label": "가점 항목 충족",
+        "pct": 0
+      },
+      {
+        "label": "감점 항목 해소",
+        "pct": 100
+      },
+      {
+        "label": "전체 준비도",
+        "pct": 0
+      }
+    ],
+    "gang_pro_log": [
+      "[00:49:09] ✅ 완료"
+    ]
+  },
+  {
+    "date": "2026-03-19",
+    "company": "KOICA(한국국제협력단)",
+    "score": 0,
+    "grade": "C",
+    "verdict": "⚡ 도전 가능 — 부족한 부분을 명확히 파악 후 지원.",
+    "bonuses": [],
+    "penalties": [
+      {
+        "label": "어학 컷오프 (토익 800 이상 고정)",
+        "score": 0,
+        "msg": "✅ OPIc IH → 토익 820 환산, 어학 기준 충족으로 감점 면제"
+      }
+    ],
+    "todos": [
+      {
+        "text": "응시 자격 요건 및 결격 사유 1차 검토",
+        "done": false
+      },
+      {
+        "text": "관련 경력 강화 계획 수립",
+        "done": false
+      },
+      {
+        "text": "NCS 직무기술서 분석 및 직무 역량 강화 전략 수립",
+        "done": false
+      }
+    ],
+    "todo_rate": 0,
+    "spec_progress": [
+      {
+        "label": "가점 항목 충족",
+        "pct": 0
+      },
+      {
+        "label": "감점 항목 해소",
+        "pct": 100
+      },
+      {
+        "label": "전체 준비도",
+        "pct": 0
+      }
+    ],
+    "gang_pro_log": [
+      "[10:17:58] ✅ 완료"
+    ]
+  },
+  {
     "date": "2026-03-18",
     "company": "국민연금공단",
     "score": 0,
